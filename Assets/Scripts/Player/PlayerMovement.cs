@@ -48,17 +48,14 @@ public sealed class PlayerMovement : MonoBehaviour
         if (!GroundPlane.Raycast(ray, out float enter))
             return;
 
-        var hit = ray.GetPoint(enter);
-        var toFlat = hit - transform.position;
+        var toFlat = ray.GetPoint(enter) - transform.position;
         toFlat.y = 0f;
         if (toFlat.sqrMagnitude < 0.0001f)
             return;
 
         var target = Quaternion.LookRotation(toFlat.normalized, Vector3.up);
         transform.rotation = Quaternion.RotateTowards(
-            transform.rotation,
-            target,
-            aimTurnSpeedDegrees * Time.deltaTime);
+            transform.rotation, target, aimTurnSpeedDegrees * Time.deltaTime);
     }
 
     static bool TryGetPointerScreenPosition(out Vector2 screenPos)
@@ -79,27 +76,12 @@ public sealed class PlayerMovement : MonoBehaviour
 #endif
     }
 
-    static Keyboard ResolveKeyboard()
-    {
-        var kb = Keyboard.current;
-        if (kb != null)
-            return kb;
-
-        foreach (var device in InputSystem.devices)
-        {
-            if (device is Keyboard k)
-                return k;
-        }
-
-        return null;
-    }
-
     void ReadMoveInput(out float x, out float z)
     {
         x = 0f;
         z = 0f;
 
-        var kb = ResolveKeyboard();
+        var kb = Keyboard.current;
         if (kb != null)
         {
             if (kb.aKey.isPressed || kb.leftArrowKey.isPressed)
