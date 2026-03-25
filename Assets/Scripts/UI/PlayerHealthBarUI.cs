@@ -47,12 +47,7 @@ public sealed class PlayerHealthBarUI : MonoBehaviour
 
     void OnHealthChanged(float current, float max)
     {
-        if (_fillImage == null || max <= 0.0001f)
-            return;
-
-        var n = Mathf.Clamp01(current / max);
-        _fillImage.fillAmount = n;
-        _fillImage.color = Color.Lerp(fillLow, fillHigh, n);
+        HealthBarFactory.ApplyFill(_fillImage, current, max, fillLow, fillHigh);
 
         if (_canvas != null && hideWhenFullHealth)
             _canvas.enabled = current < max - 0.01f;
@@ -60,41 +55,18 @@ public sealed class PlayerHealthBarUI : MonoBehaviour
 
     void BuildScreenBar()
     {
-        var root = new GameObject("PlayerHealthHUD");
-        root.transform.SetParent(transform, false);
+        var references = HealthBarFactory.CreateScreenBar(
+            transform,
+            "PlayerHealthHUD",
+            anchorMin,
+            anchorMax,
+            backgroundColor,
+            fillHigh,
+            new Vector2(0.02f, 0.12f),
+            new Vector2(-0.02f, -0.12f));
 
-        _canvas = root.AddComponent<Canvas>();
-        _canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        _canvas.sortingOrder = 200;
-        root.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        root.AddComponent<GraphicRaycaster>();
-
-        var panel = new GameObject("BarPanel");
-        panel.transform.SetParent(root.transform, false);
-        var panelRect = panel.AddComponent<RectTransform>();
-        panelRect.anchorMin = anchorMin;
-        panelRect.anchorMax = anchorMax;
-        panelRect.offsetMin = Vector2.zero;
-        panelRect.offsetMax = Vector2.zero;
-
-        var bg = panel.AddComponent<Image>();
-        bg.sprite = UiSprites.White;
-        bg.color = backgroundColor;
-
-        var fillGo = new GameObject("Fill");
-        fillGo.transform.SetParent(panel.transform, false);
-        _fillImage = fillGo.AddComponent<Image>();
-        _fillImage.sprite = UiSprites.White;
-        _fillImage.type = Image.Type.Filled;
-        _fillImage.fillMethod = Image.FillMethod.Horizontal;
-        _fillImage.fillOrigin = (int)Image.OriginHorizontal.Left;
-        _fillImage.fillAmount = 1f;
-        _fillImage.color = fillHigh;
-        var fillRect = _fillImage.rectTransform;
-        fillRect.anchorMin = new Vector2(0.02f, 0.12f);
-        fillRect.anchorMax = new Vector2(0.98f, 0.88f);
-        fillRect.offsetMin = Vector2.zero;
-        fillRect.offsetMax = Vector2.zero;
+        _canvas = references.Canvas;
+        _fillImage = references.FillImage;
     }
 
 }

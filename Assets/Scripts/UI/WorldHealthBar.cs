@@ -57,12 +57,7 @@ public sealed class WorldHealthBar : MonoBehaviour
 
     void OnHealthChanged(float current, float max)
     {
-        if (_fillImage == null || max <= 0.0001f)
-            return;
-
-        var n = Mathf.Clamp01(current / max);
-        _fillImage.fillAmount = n;
-        _fillImage.color = Color.Lerp(fillLow, fillHigh, n);
+        HealthBarFactory.ApplyFill(_fillImage, current, max, fillLow, fillHigh);
 
         if (_canvas != null)
             _canvas.enabled = current < max - 0.01f;
@@ -73,55 +68,18 @@ public sealed class WorldHealthBar : MonoBehaviour
         if (_canvas != null)
             return;
 
-        var root = new GameObject("HealthBarBillboard");
-        root.transform.SetParent(transform, false);
-        root.transform.localPosition = worldOffset;
-        _billboardRoot = root.transform;
-        _billboardRoot.localScale = Vector3.one * billboardScale;
+        var references = HealthBarFactory.CreateWorldBar(
+            transform,
+            "HealthBarBillboard",
+            worldOffset,
+            worldSize,
+            billboardScale,
+            pixelsPerUnit,
+            backgroundColor,
+            fillHigh);
 
-        var canvasGo = new GameObject("Canvas");
-        canvasGo.transform.SetParent(_billboardRoot, false);
-        _canvas = canvasGo.AddComponent<Canvas>();
-        _canvas.renderMode = RenderMode.WorldSpace;
-        _canvas.sortingOrder = 50;
-        var rect = canvasGo.GetComponent<RectTransform>();
-        rect.sizeDelta = worldSize;
-        rect.localPosition = Vector3.zero;
-        rect.localRotation = Quaternion.identity;
-
-        var scaler = canvasGo.AddComponent<CanvasScaler>();
-        scaler.dynamicPixelsPerUnit = pixelsPerUnit;
-
-        var bgGo = new GameObject("Background");
-        bgGo.transform.SetParent(canvasGo.transform, false);
-        var bg = bgGo.AddComponent<Image>();
-        bg.sprite = UiSprites.White;
-        bg.color = backgroundColor;
-        var bgRect = bg.GetComponent<RectTransform>();
-        StretchFull(bgRect);
-
-        var fillGo = new GameObject("Fill");
-        fillGo.transform.SetParent(canvasGo.transform, false);
-        _fillImage = fillGo.AddComponent<Image>();
-        _fillImage.sprite = UiSprites.White;
-        _fillImage.type = Image.Type.Filled;
-        _fillImage.fillMethod = Image.FillMethod.Horizontal;
-        _fillImage.fillOrigin = (int)Image.OriginHorizontal.Left;
-        _fillImage.fillAmount = 1f;
-        _fillImage.color = fillHigh;
-        var fillRect = _fillImage.rectTransform;
-        StretchFull(fillRect);
-
-        if (_canvas != null)
-            _canvas.enabled = false;
+        _billboardRoot = references.Root;
+        _canvas = references.Canvas;
+        _fillImage = references.FillImage;
     }
-
-    static void StretchFull(RectTransform r)
-    {
-        r.anchorMin = Vector2.zero;
-        r.anchorMax = Vector2.one;
-        r.offsetMin = new Vector2(3f, 3f);
-        r.offsetMax = new Vector2(-3f, -3f);
-    }
-
 }

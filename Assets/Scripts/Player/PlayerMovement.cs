@@ -12,7 +12,6 @@ public sealed class PlayerMovement : MonoBehaviour
 
     CharacterController _characterController;
     Vector3 _verticalVelocity;
-    static readonly Plane GroundPlane = new Plane(Vector3.up, Vector3.zero);
 
     void Awake() => _characterController = GetComponent<CharacterController>();
 
@@ -41,39 +40,18 @@ public sealed class PlayerMovement : MonoBehaviour
         if (cam == null)
             return;
 
-        if (!TryGetPointerScreenPosition(out Vector2 screenPos))
+        if (!TopDownAimUtility.TryGetPointerScreenPosition(out Vector2 screenPos))
             return;
 
-        var ray = cam.ScreenPointToRay(screenPos);
-        if (!GroundPlane.Raycast(ray, out float enter))
+        if (!TopDownAimUtility.TryGetGroundPointUnderScreenPosition(cam, screenPos, out var groundPoint))
             return;
 
-        var toFlat = ray.GetPoint(enter) - transform.position;
-        toFlat.y = 0f;
-        if (toFlat.sqrMagnitude < 0.0001f)
+        if (!TopDownAimUtility.TryGetFlatDirection(transform.position, groundPoint, out var aimDirection))
             return;
 
-        var target = Quaternion.LookRotation(toFlat.normalized, Vector3.up);
+        var target = Quaternion.LookRotation(aimDirection, Vector3.up);
         transform.rotation = Quaternion.RotateTowards(
             transform.rotation, target, aimTurnSpeedDegrees * Time.deltaTime);
-    }
-
-    static bool TryGetPointerScreenPosition(out Vector2 screenPos)
-    {
-        var mouse = Mouse.current;
-        if (mouse != null)
-        {
-            screenPos = mouse.position.ReadValue();
-            return true;
-        }
-
-#if ENABLE_LEGACY_INPUT_MANAGER
-        screenPos = Input.mousePosition;
-        return true;
-#else
-        screenPos = default;
-        return false;
-#endif
     }
 
     void ReadMoveInput(out float x, out float z)

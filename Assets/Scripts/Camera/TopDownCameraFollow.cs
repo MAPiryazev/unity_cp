@@ -3,6 +3,8 @@ using UnityEngine;
 public sealed class TopDownCameraFollow : MonoBehaviour
 {
     [SerializeField] Transform target;
+    [SerializeField] bool autoResolveTarget = true;
+    [SerializeField] string fallbackTargetName = "Player";
     [SerializeField] Vector3 offset = new Vector3(0f, 29.333334f, 0f);
     [Tooltip("SmoothDamp time — меньше = быстрее догоняет, больше = мягче.")]
     [SerializeField] float smoothTime = 0.12f;
@@ -13,12 +15,8 @@ public sealed class TopDownCameraFollow : MonoBehaviour
 
     void Start()
     {
-        if (target == null)
-        {
-            var player = FindFirstObjectByType<PlayerMovement>();
-            if (player != null)
-                target = player.transform;
-        }
+        if (target == null && autoResolveTarget)
+            target = ResolveTarget();
     }
 
     void LateUpdate()
@@ -31,5 +29,23 @@ public sealed class TopDownCameraFollow : MonoBehaviour
 
         if (lockTopDownRotation)
             transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+    }
+
+    public void SetTarget(Transform newTarget)
+    {
+        target = newTarget;
+    }
+
+    Transform ResolveTarget()
+    {
+        if (!string.IsNullOrWhiteSpace(fallbackTargetName))
+        {
+            var namedTarget = GameObject.Find(fallbackTargetName);
+            if (namedTarget != null)
+                return namedTarget.transform;
+        }
+
+        var player = FindFirstObjectByType<PlayerMovement>();
+        return player != null ? player.transform : null;
     }
 }

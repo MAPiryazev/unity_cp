@@ -1,29 +1,27 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
 
 /// <summary>
 /// Хитскан top-down: направление — от дула к точке на полу под курсором (горизонтальный луч на <see cref="maxRange"/>).
-/// Первое попадание по <see cref="lineOfFireLayers"/> (стены Default + враги Enemy) останавливает луч; урон только при <see cref="Health"/>.
+/// Первое попадание по <see cref="lineOfFireLayers"/> (стены Default + враги Enemy) останавливает луч.
 /// </summary>
 [DisallowMultipleComponent]
 public sealed class RaycastShooting : MonoBehaviour
 {
-    public enum FireMode
-    {
-        /// <summary>Один выстрел на нажатие (ЛКМ).</summary>
-        SemiAutomatic,
-        /// <summary>Удержание ЛКМ — очередь с ограничением по <see cref="shotsPerSecond"/>.</summary>
-        Automatic
-    }
+    [Header("Weapon Source")]
+    [SerializeField] HitscanWeaponDefinition weaponDefinition;
+    [SerializeField] WeaponModifierDefinition[] installedModules = System.Array.Empty<WeaponModifierDefinition>();
 
+    [Header("Fallback Settings")]
     [SerializeField] Camera aimCamera;
     [SerializeField] float damage = 10f;
     [SerializeField] float maxRange = 200f;
     [Tooltip("Выстрелов в секунду (режим Automatic) или максимальная скорость кликов (Semi).")]
     [SerializeField] float shotsPerSecond = 8f;
-    [SerializeField] FireMode fireMode = FireMode.SemiAutomatic;
+    [SerializeField] WeaponFireMode fireMode = WeaponFireMode.SemiAutomatic;
     [Tooltip("Слои, с которыми сталкивается луч: Default (стены/пол при необходимости) + Enemy. Без слоя Player — иначе луч упирается в себя.")]
     [FormerlySerializedAs("enemyLayers")]
     [SerializeField] LayerMask lineOfFireLayers;
@@ -42,28 +40,19 @@ public sealed class RaycastShooting : MonoBehaviour
     [SerializeField] AudioClip fireSound;
     [SerializeField] [Range(0f, 1f)] float fireSoundVolume = 0.45f;
 
-    static readonly Plane GroundPlane = new Plane(Vector3.up, Vector3.zero);
-
+    readonly List<WeaponModifierDefinition> _runtimeModules = new List<WeaponModifierDefinition>();
     float _nextShotTime;
     int _lastShotFrame = -1;
     LineRenderer _line;
     Coroutine _tracerRoutine;
     AudioSource _audio;
+    HitscanWeaponSettings _resolvedWeapon;
 
     void Awake()
     {
-        if (lineOfFireLayers.value == 0)
-            lineOfFireLayers = LayerMask.GetMask("Default", "Enemy");
-        else
-        {
-            // Старые пресеты только с Enemy — добавляем стены (ArenaBootstrap кладёт их на Default).
-            var enemyOnly = LayerMask.GetMask("Enemy");
-            if (lineOfFireLayers.value == enemyOnly)
-                lineOfFireLayers |= LayerMask.GetMask("Default");
-        }
-
-        shotsPerSecond = Mathf.Max(0.01f, shotsPerSecond);
-
+        SyncModulesFromSerializedState();
+        EnsureLineOfFireLayers();
+        RefreshResolvedWeapon();
         _audio = GetComponent<AudioSource>();
         if (_audio == null)
             _audio = gameObject.AddComponent<AudioSource>();
@@ -71,12 +60,20 @@ public sealed class RaycastShooting : MonoBehaviour
         _audio.spatialBlend = 0f;
     }
 
+    void OnValidate()
+    {
+        SyncModulesFromSerializedState();
+        EnsureLineOfFireLayers();
+        RefreshResolvedWeapon();
+        ApplyLineVisuals();
+    }
+
     void Update()
     {
         if (!ShouldFireThisUpdate())
             return;
 
-        var gap = 1f / shotsPerSecond;
+        var gap = 1f / _resolvedWeapon.ShotsPerSecond;
         if (Time.time < _nextShotTime)
             return;
 
@@ -90,7 +87,7 @@ public sealed class RaycastShooting : MonoBehaviour
 
     bool ShouldFireThisUpdate()
     {
-        return fireMode == FireMode.Automatic ? IsFireHeld() : WasFirePressedThisFrame();
+        return _resolvedWeapon.FireMode == WeaponFireMode.Automatic ? IsFireHeld() : WasFirePressedThisFrame();
     }
 
     static bool WasFirePressedThisFrame()
@@ -125,57 +122,61 @@ public sealed class RaycastShooting : MonoBehaviour
         if (cam == null)
             return;
 
-        if (!TryGetPointerScreenPosition(out var screenPos))
+        if (!TopDownAimUtility.TryGetPointerScreenPosition(out var screenPos))
             return;
 
-        if (!TryGetGroundPointUnderCursor(cam, screenPos, out var groundAim))
+        if (!TopDownAimUtility.TryGetGroundPointUnderScreenPosition(cam, screenPos, out var groundAim))
             return;
 
         var muzzle = GetMuzzleWorld();
-        var dir = new Vector3(groundAim.x - muzzle.x, 0f, groundAim.z - muzzle.z);
-        if (dir.sqrMagnitude < 1e-6f)
+        if (!TopDownAimUtility.TryGetFlatDirection(muzzle, groundAim, out var direction))
             return;
 
-        dir.Normalize();
-
         Vector3 tracerEnd;
-        if (Physics.Raycast(muzzle, dir, out var hit, maxRange, lineOfFireLayers, triggerInteraction))
+        if (Physics.Raycast(muzzle, direction, out var hit, _resolvedWeapon.MaxRange, lineOfFireLayers, triggerInteraction))
         {
-            ApplyDamageIfAny(hit.collider, damage);
+            DamageUtility.TryApplyDamage(hit.collider, new DamageInfo(_resolvedWeapon.Damage, hit.point, direction, gameObject));
             tracerEnd = hit.point;
         }
         else
         {
-            tracerEnd = muzzle + dir * maxRange;
+            tracerEnd = muzzle + direction * _resolvedWeapon.MaxRange;
         }
 
         PlayShootFeedback(tracerEnd);
     }
 
-    bool TryGetGroundPointUnderCursor(Camera cam, Vector2 screenPixel, out Vector3 groundPoint)
+    public void AddModifier(WeaponModifierDefinition modifier)
     {
-        groundPoint = default;
-        var ray = BuildAimRay(cam, screenPixel);
-        if (!GroundPlane.Raycast(ray, out float enter))
-            return false;
+        if (modifier == null)
+            return;
 
-        groundPoint = ray.GetPoint(enter);
-        return true;
+        _runtimeModules.Add(modifier);
+        RefreshResolvedWeapon();
+    }
+
+    public void RemoveModifier(WeaponModifierDefinition modifier)
+    {
+        if (modifier == null)
+            return;
+
+        if (_runtimeModules.Remove(modifier))
+            RefreshResolvedWeapon();
     }
 
     Vector3 GetMuzzleWorld()
     {
         if (tracerOrigin != null)
             return tracerOrigin.position;
-        return transform.position + Vector3.up * tracerOriginHeight;
+        return transform.position + Vector3.up * _resolvedWeapon.TracerOriginHeight;
     }
 
     void PlayShootFeedback(Vector3 worldEnd)
     {
-        if (fireSound != null && _audio != null)
-            _audio.PlayOneShot(fireSound, fireSoundVolume);
+        if (_resolvedWeapon.FireSound != null && _audio != null)
+            _audio.PlayOneShot(_resolvedWeapon.FireSound, _resolvedWeapon.FireSoundVolume);
 
-        if (!showTracer)
+        if (!_resolvedWeapon.ShowTracer)
             return;
 
         var start = GetMuzzleWorld();
@@ -188,10 +189,11 @@ public sealed class RaycastShooting : MonoBehaviour
     IEnumerator TracerRoutine(Vector3 start, Vector3 end)
     {
         EnsureLineRenderer();
+        ApplyLineVisuals();
         _line.enabled = true;
         _line.SetPosition(0, start);
         _line.SetPosition(1, end);
-        yield return new WaitForSeconds(tracerDuration);
+        yield return new WaitForSeconds(_resolvedWeapon.TracerDuration);
         _line.enabled = false;
         _tracerRoutine = null;
     }
@@ -203,16 +205,23 @@ public sealed class RaycastShooting : MonoBehaviour
 
         _line = gameObject.AddComponent<LineRenderer>();
         _line.positionCount = 2;
-        _line.widthMultiplier = tracerWidth;
         _line.numCapVertices = 4;
         _line.numCornerVertices = 2;
         _line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         _line.receiveShadows = false;
         _line.useWorldSpace = true;
-        _line.startColor = tracerColor;
-        _line.endColor = tracerColor;
         _line.material = CreateTracerMaterial();
         _line.enabled = false;
+    }
+
+    void ApplyLineVisuals()
+    {
+        if (_line == null)
+            return;
+
+        _line.widthMultiplier = _resolvedWeapon.TracerWidth;
+        _line.startColor = _resolvedWeapon.TracerColor;
+        _line.endColor = _resolvedWeapon.TracerColor;
     }
 
     static Material CreateTracerMaterial()
@@ -230,42 +239,59 @@ public sealed class RaycastShooting : MonoBehaviour
         return mat;
     }
 
-    static void ApplyDamageIfAny(Collider collider, float damageAmount)
+    void SyncModulesFromSerializedState()
     {
-        if (collider == null)
+        _runtimeModules.Clear();
+        if (installedModules == null)
             return;
 
-        var health = collider.GetComponent<Health>() ?? collider.GetComponentInParent<Health>();
-        if (health != null)
-            health.TakeDamage(damageAmount);
-    }
-
-    static Ray BuildAimRay(Camera cam, Vector2 screenPixel)
-    {
-        var rect = cam.pixelRect;
-        var nx = (screenPixel.x - rect.x) / rect.width;
-        var ny = (screenPixel.y - rect.y) / rect.height;
-        if (nx >= 0f && nx <= 1f && ny >= 0f && ny <= 1f)
-            return cam.ViewportPointToRay(new Vector3(nx, ny, 0f));
-
-        return cam.ScreenPointToRay(new Vector3(screenPixel.x, screenPixel.y, 0f));
-    }
-
-    static bool TryGetPointerScreenPosition(out Vector2 screenPos)
-    {
-        var mouse = Mouse.current;
-        if (mouse != null)
+        for (int i = 0; i < installedModules.Length; i++)
         {
-            screenPos = mouse.position.ReadValue();
-            return true;
+            if (installedModules[i] != null)
+                _runtimeModules.Add(installedModules[i]);
+        }
+    }
+
+    void EnsureLineOfFireLayers()
+    {
+        if (lineOfFireLayers.value == 0)
+        {
+            lineOfFireLayers = LayerMask.GetMask("Default", "Enemy");
+            return;
         }
 
-#if ENABLE_LEGACY_INPUT_MANAGER
-        screenPos = Input.mousePosition;
-        return true;
-#else
-        screenPos = default;
-        return false;
-#endif
+        var enemyOnly = LayerMask.GetMask("Enemy");
+        if (lineOfFireLayers.value == enemyOnly)
+            lineOfFireLayers |= LayerMask.GetMask("Default");
+    }
+
+    void RefreshResolvedWeapon()
+    {
+        _resolvedWeapon = weaponDefinition != null ? weaponDefinition.BuildSettings() : CreateFallbackSettings();
+        for (int i = 0; i < _runtimeModules.Count; i++)
+            _runtimeModules[i].Apply(ref _resolvedWeapon);
+
+        _resolvedWeapon.Clamp();
+    }
+
+    HitscanWeaponSettings CreateFallbackSettings()
+    {
+        var settings = new HitscanWeaponSettings
+        {
+            FireMode = fireMode,
+            Damage = damage,
+            MaxRange = maxRange,
+            ShotsPerSecond = shotsPerSecond,
+            ShowTracer = showTracer,
+            TracerDuration = tracerDuration,
+            TracerWidth = tracerWidth,
+            TracerColor = tracerColor,
+            TracerOriginHeight = tracerOriginHeight,
+            FireSound = fireSound,
+            FireSoundVolume = fireSoundVolume
+        };
+
+        settings.Clamp();
+        return settings;
     }
 }
