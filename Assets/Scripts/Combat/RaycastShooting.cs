@@ -359,7 +359,8 @@ public sealed class RaycastShooting : MonoBehaviour
 
     void RefreshResolvedWeapon()
     {
-        _resolvedWeapon = ResolveActiveWeaponDefinition() != null ? ResolveActiveWeaponDefinition().BuildSettings() : CreateFallbackSettings();
+        var activeWeapon = ResolveActiveWeaponDefinition();
+        _resolvedWeapon = activeWeapon != null ? activeWeapon.BuildSettings() : CreateFallbackSettings();
         for (int i = 0; i < _runtimeModules.Count; i++)
             _runtimeModules[i].Apply(ref _resolvedWeapon);
 
@@ -413,36 +414,45 @@ public sealed class RaycastShooting : MonoBehaviour
     {
         int projectileCount = Mathf.Max(1, _resolvedWeapon.ProjectileCount);
         var tracerEnds = new Vector3[projectileCount];
+        var shotDirections = BuildShotDirections(baseDirection, projectileCount);
 
         for (int i = 0; i < projectileCount; i++)
-        {
-            Vector3 shotDirection = GetProjectileDirection(baseDirection, i, projectileCount);
-            if (Physics.Raycast(muzzle, shotDirection, out var hit, _resolvedWeapon.MaxRange, lineOfFireLayers, triggerInteraction))
-            {
-                DamageUtility.TryApplyDamage(hit.collider, new DamageInfo(_resolvedWeapon.Damage, hit.point, shotDirection, gameObject));
-                tracerEnds[i] = hit.point;
-            }
-            else
-            {
-                tracerEnds[i] = muzzle + shotDirection * _resolvedWeapon.MaxRange;
-            }
-        }
+            tracerEnds[i] = FireSingleProjectile(muzzle, shotDirections[i]);
 
         return tracerEnds;
     }
 
-    Vector3 GetProjectileDirection(Vector3 baseDirection, int projectileIndex, int projectileCount)
+    Vector3[] BuildShotDirections(Vector3 baseDirection, int projectileCount)
     {
+        var directions = new Vector3[projectileCount];
         if (projectileCount <= 1 || _resolvedWeapon.SpreadAngle <= 0.001f)
-            return baseDirection;
+        {
+            directions[0] = baseDirection;
+            return directions;
+        }
 
-        if (projectileIndex == 0)
-            return baseDirection;
+        for (int i = 0; i < projectileCount; i++)
+            directions[i] = SampleSpreadDirection(baseDirection);
 
+        return directions;
+    }
+
+    Vector3 SampleSpreadDirection(Vector3 baseDirection)
+    {
         float spreadHalf = _resolvedWeapon.SpreadAngle * 0.5f;
-        float t = projectileCount <= 2 ? 0.5f : (projectileIndex - 1) / (float)(projectileCount - 2);
-        float angle = Mathf.Lerp(-spreadHalf, spreadHalf, t);
-        return Quaternion.AngleAxis(angle, Vector3.up) * baseDirection;
+        float randomAngle = UnityEngine.Random.Range(-spreadHalf, spreadHalf);
+        return Quaternion.AngleAxis(randomAngle, Vector3.up) * baseDirection;
+    }
+
+    Vector3 FireSingleProjectile(Vector3 muzzle, Vector3 shotDirection)
+    {
+        if (Physics.Raycast(muzzle, shotDirection, out var hit, _resolvedWeapon.MaxRange, lineOfFireLayers, triggerInteraction))
+        {
+            DamageUtility.TryApplyDamage(hit.collider, new DamageInfo(_resolvedWeapon.Damage, hit.point, shotDirection, gameObject));
+            return hit.point;
+        }
+
+        return muzzle + shotDirection * _resolvedWeapon.MaxRange;
     }
 
     void HandleWeaponSwitchInput()
