@@ -17,6 +17,7 @@ public sealed class RaycastShooting : MonoBehaviour
     [SerializeField] HitscanWeaponDefinition[] weaponLoadout = Array.Empty<HitscanWeaponDefinition>();
     [SerializeField] int startingWeaponIndex;
     [SerializeField] WeaponModifierDefinition[] installedModules = System.Array.Empty<WeaponModifierDefinition>();
+    [SerializeField] float defaultTemporaryModifierDuration = 12f;
 
     [Header("Fallback Settings")]
     [SerializeField] Camera aimCamera;
@@ -43,7 +44,8 @@ public sealed class RaycastShooting : MonoBehaviour
     [SerializeField] AudioClip fireSound;
     [SerializeField] [Range(0f, 1f)] float fireSoundVolume = 0.45f;
 
-    readonly List<WeaponModifierDefinition> _runtimeModules = new List<WeaponModifierDefinition>();
+    readonly List<WeaponModifierDefinition> _persistentModules = new List<WeaponModifierDefinition>();
+    readonly List<WeaponModifierRuntimeInstance> _temporaryModules = new List<WeaponModifierRuntimeInstance>();
     float _nextShotTime;
     int _lastShotFrame = -1;
     readonly List<LineRenderer> _tracerLines = new List<LineRenderer>();
@@ -56,11 +58,13 @@ public sealed class RaycastShooting : MonoBehaviour
 
     public HitscanWeaponSettings ResolvedWeapon => _resolvedWeapon;
     public HitscanWeaponDefinition ActiveWeaponDefinition => ResolveActiveWeaponDefinition();
+    public IReadOnlyList<WeaponModifierRuntimeInstance> ActiveTemporaryModifiers => _temporaryModules;
     public event Action<HitscanWeaponSettings> WeaponChanged;
+    public event Action<IReadOnlyList<WeaponModifierRuntimeInstance>> TemporaryModifiersChanged;
 
     void Awake()
     {
-        SyncModulesFromSerializedState();
+        SyncPersistentModulesFromSerializedState();
         ClampWeaponIndex();
         EnsureLineOfFireLayers();
         RefreshResolvedWeapon();
@@ -71,6 +75,7 @@ public sealed class RaycastShooting : MonoBehaviour
             _audio = gameObject.AddComponent<AudioSource>();
         _audio.playOnAwake = false;
         _audio.spatialBlend = 0f;
+        EnsureModifierHud();
     }
 
     void OnDisable()
@@ -86,7 +91,7 @@ public sealed class RaycastShooting : MonoBehaviour
 
     void OnValidate()
     {
-        SyncModulesFromSerializedState();
+        SyncPersistentModulesFromSerializedState();
         ClampWeaponIndex();
         EnsureLineOfFireLayers();
         RefreshResolvedWeapon();
@@ -95,6 +100,7 @@ public sealed class RaycastShooting : MonoBehaviour
 
     void Update()
     {
+        CleanupExpiredTemporaryModifiers();
         HandleWeaponSwitchInput();
 
         if (!ShouldFireThisUpdate())
@@ -165,11 +171,47 @@ public sealed class RaycastShooting : MonoBehaviour
 
     public void AddModifier(WeaponModifierDefinition modifier)
     {
+        AddModifier(modifier, defaultTemporaryModifierDuration);
+    }
+
+    public void AddModifier(WeaponModifierDefinition modifier, float duration)
+    {
         if (modifier == null)
             return;
 
-        _runtimeModules.Add(modifier);
+        for (int i = 0; i < _temporaryModules.Count; i++)
+        {
+            if (!_temporaryModules[i].Matches(modifier))
+                continue;
+
+            _temporaryModules[i].Refresh(duration);
+            NotifyTemporaryModifiersChanged();
+            return;
+        }
+
+        _temporaryModules.Add(new WeaponModifierRuntimeInstance(modifier, duration));
         RefreshResolvedWeapon();
+        NotifyTemporaryModifiersChanged();
+    }
+
+    public void AddModifier(StatWeaponModifierTemplate modifierTemplate, float duration)
+    {
+        if (!modifierTemplate.HasEffect)
+            return;
+
+        for (int i = 0; i < _temporaryModules.Count; i++)
+        {
+            if (!_temporaryModules[i].Matches(modifierTemplate))
+                continue;
+
+            _temporaryModules[i].Refresh(duration);
+            NotifyTemporaryModifiersChanged();
+            return;
+        }
+
+        _temporaryModules.Add(new WeaponModifierRuntimeInstance(modifierTemplate, duration));
+        RefreshResolvedWeapon();
+        NotifyTemporaryModifiersChanged();
     }
 
     public void RemoveModifier(WeaponModifierDefinition modifier)
@@ -177,8 +219,16 @@ public sealed class RaycastShooting : MonoBehaviour
         if (modifier == null)
             return;
 
-        if (_runtimeModules.Remove(modifier))
+        for (int i = _temporaryModules.Count - 1; i >= 0; i--)
+        {
+            if (!_temporaryModules[i].Matches(modifier))
+                continue;
+
+            _temporaryModules.RemoveAt(i);
             RefreshResolvedWeapon();
+            NotifyTemporaryModifiersChanged();
+            break;
+        }
     }
 
     public void SetTracerOrigin(Transform origin)
@@ -331,16 +381,16 @@ public sealed class RaycastShooting : MonoBehaviour
         return mat;
     }
 
-    void SyncModulesFromSerializedState()
+    void SyncPersistentModulesFromSerializedState()
     {
-        _runtimeModules.Clear();
+        _persistentModules.Clear();
         if (installedModules == null)
             return;
 
         for (int i = 0; i < installedModules.Length; i++)
         {
             if (installedModules[i] != null)
-                _runtimeModules.Add(installedModules[i]);
+                _persistentModules.Add(installedModules[i]);
         }
     }
 
@@ -359,10 +409,13 @@ public sealed class RaycastShooting : MonoBehaviour
 
     void RefreshResolvedWeapon()
     {
+        RemoveExpiredTemporaryModifiers();
         var activeWeapon = ResolveActiveWeaponDefinition();
         _resolvedWeapon = activeWeapon != null ? activeWeapon.BuildSettings() : CreateFallbackSettings();
-        for (int i = 0; i < _runtimeModules.Count; i++)
-            _runtimeModules[i].Apply(ref _resolvedWeapon);
+        for (int i = 0; i < _persistentModules.Count; i++)
+            _persistentModules[i].Apply(ref _resolvedWeapon);
+        for (int i = 0; i < _temporaryModules.Count; i++)
+            _temporaryModules[i].Apply(ref _resolvedWeapon);
 
         _resolvedWeapon.Clamp();
         WeaponChanged?.Invoke(_resolvedWeapon);
@@ -484,5 +537,41 @@ public sealed class RaycastShooting : MonoBehaviour
         _activeWeaponIndex = Mathf.Max(0, startingWeaponIndex);
         if (weaponLoadout != null && weaponLoadout.Length > 0)
             _activeWeaponIndex = Mathf.Clamp(_activeWeaponIndex, 0, weaponLoadout.Length - 1);
+    }
+
+    void CleanupExpiredTemporaryModifiers(bool notifyOnly = true)
+    {
+        if (!RemoveExpiredTemporaryModifiers())
+            return;
+
+        RefreshResolvedWeapon();
+        if (notifyOnly)
+            NotifyTemporaryModifiersChanged();
+    }
+
+    bool RemoveExpiredTemporaryModifiers()
+    {
+        bool removedAny = false;
+        for (int i = _temporaryModules.Count - 1; i >= 0; i--)
+        {
+            if (!_temporaryModules[i].IsExpired)
+                continue;
+
+            _temporaryModules.RemoveAt(i);
+            removedAny = true;
+        }
+
+        return removedAny;
+    }
+
+    void NotifyTemporaryModifiersChanged()
+    {
+        TemporaryModifiersChanged?.Invoke(_temporaryModules);
+    }
+
+    void EnsureModifierHud()
+    {
+        if (GetComponent<WeaponModifierHudUI>() == null)
+            gameObject.AddComponent<WeaponModifierHudUI>();
     }
 }

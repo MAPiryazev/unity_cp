@@ -11,6 +11,7 @@ public sealed class ArenaBootstrap : MonoBehaviour
 
     void Awake()
     {
+        EnsureGameplayHelpers();
         if (transform.Find("Floor") != null)
             return;
         BuildArena();
@@ -57,5 +58,11 @@ public sealed class ArenaBootstrap : MonoBehaviour
             "WallWest",
             new Vector3(-halfExtent - wallThickness * 0.5f, h, 0f),
             new Vector3(wallThickness, wallHeight, span));
+    }
+
+    void EnsureGameplayHelpers()
+    {
+        if (GetComponent<WeaponModuleSpawner>() == null)
+            gameObject.AddComponent<WeaponModuleSpawner>();
     }
 }

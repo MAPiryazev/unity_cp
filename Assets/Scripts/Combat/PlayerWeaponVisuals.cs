@@ -62,7 +62,12 @@ public sealed class PlayerWeaponVisuals : MonoBehaviour
 
                 var collider = visualObject.GetComponent<Collider>();
                 if (collider != null)
-                    Destroy(collider);
+                {
+                    if (Application.isPlaying)
+                        Destroy(collider);
+                    else
+                        DestroyImmediate(collider);
+                }
 
                 _visual = visualObject.transform;
                 _renderer = visualObject.GetComponent<Renderer>();
@@ -97,10 +102,19 @@ public sealed class PlayerWeaponVisuals : MonoBehaviour
         if (_renderer == null)
             _renderer = _visual.GetComponent<Renderer>();
 
-        if (_renderer != null)
-            _renderer.material.color = settings.VisualColor;
+        ApplyRendererColor(_renderer, settings.VisualColor);
 
         if (_shooting != null)
             _shooting.SetTracerOrigin(_muzzle);
+    }
+
+    static void ApplyRendererColor(Renderer renderer, Color color)
+    {
+        if (renderer == null)
+            return;
+
+        var targetMaterial = Application.isPlaying ? renderer.material : renderer.sharedMaterial;
+        if (targetMaterial != null)
+            targetMaterial.color = color;
     }
 }
