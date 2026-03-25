@@ -61,14 +61,14 @@ public static class HealthBarFactory
         Vector2 fillInsetMin,
         Vector2 fillInsetMax)
     {
-        var root = new GameObject(rootName).transform;
-        root.SetParent(parent, false);
+        var rootObject = new GameObject(rootName);
+        var root = rootObject.transform;
 
-        var canvas = root.gameObject.AddComponent<Canvas>();
+        var canvas = rootObject.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 200;
-        root.gameObject.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        root.gameObject.AddComponent<GraphicRaycaster>();
+        rootObject.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        rootObject.AddComponent<GraphicRaycaster>();
 
         var panel = new GameObject("BarPanel");
         panel.transform.SetParent(root, false);

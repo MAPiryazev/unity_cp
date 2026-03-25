@@ -20,12 +20,18 @@ public sealed class HitscanWeaponDefinition : ScriptableObject
             Damage = 10f,
             MaxRange = 200f,
             ShotsPerSecond = 8f,
+            ProjectileCount = 1,
+            SpreadAngle = 0f,
             ShowTracer = true,
             TracerDuration = 0.07f,
             TracerWidth = 0.04f,
             TracerColor = new Color(1f, 0.92f, 0.2f, 0.95f),
             TracerOriginHeight = 0.55f,
-            FireSoundVolume = 0.45f
+            FireSoundVolume = 0.45f,
+            VisualLocalPosition = new Vector3(0.28f, 1.05f, 0.3f),
+            VisualLocalScale = new Vector3(0.14f, 0.14f, 0.6f),
+            MuzzleLocalPosition = new Vector3(0f, 0f, 0.38f),
+            VisualColor = new Color(0.18f, 0.18f, 0.2f, 1f)
         };
 
         defaults.Clamp();

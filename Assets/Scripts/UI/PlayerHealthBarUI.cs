@@ -20,6 +20,7 @@ public sealed class PlayerHealthBarUI : MonoBehaviour
 
     Canvas _canvas;
     Image _fillImage;
+    Transform _runtimeRoot;
 
     void Awake()
     {
@@ -45,6 +46,12 @@ public sealed class PlayerHealthBarUI : MonoBehaviour
             health.HealthChanged -= OnHealthChanged;
     }
 
+    void OnDestroy()
+    {
+        if (_runtimeRoot != null)
+            Destroy(_runtimeRoot.gameObject);
+    }
+
     void OnHealthChanged(float current, float max)
     {
         HealthBarFactory.ApplyFill(_fillImage, current, max, fillLow, fillHigh);
@@ -65,6 +72,7 @@ public sealed class PlayerHealthBarUI : MonoBehaviour
             new Vector2(0.02f, 0.12f),
             new Vector2(-0.02f, -0.12f));
 
+        _runtimeRoot = references.Root;
         _canvas = references.Canvas;
         _fillImage = references.FillImage;
     }

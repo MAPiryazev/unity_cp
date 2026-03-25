@@ -27,6 +27,13 @@ public class Health : MonoBehaviour, IDamageable
 
     void Start() => HealthChanged?.Invoke(_current, maxHealth);
 
+    public void SetMaxHealth(float newMaxHealth, bool refillToFull = true)
+    {
+        maxHealth = Mathf.Max(0.01f, newMaxHealth);
+        _current = refillToFull ? maxHealth : Mathf.Clamp(_current, 0f, maxHealth);
+        HealthChanged?.Invoke(_current, maxHealth);
+    }
+
     public void TakeDamage(float amount)
     {
         ApplyDamage(new DamageInfo(amount, transform.position, Vector3.zero, null));

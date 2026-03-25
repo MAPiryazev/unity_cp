@@ -7,6 +7,8 @@ public sealed class ArenaBootstrap : MonoBehaviour
     [SerializeField] float wallHeight = 3f;
     [SerializeField] float wallThickness = 0.5f;
 
+    public float HalfExtent => halfExtent;
+
     void Awake()
     {
         if (transform.Find("Floor") != null)
