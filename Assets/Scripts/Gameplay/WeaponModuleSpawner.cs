@@ -46,6 +46,7 @@ public sealed class WeaponModuleSpawner : MonoBehaviour
     [SerializeField] ArenaBootstrap arena;
     [SerializeField] Transform playerTarget;
     [SerializeField] float initialSpawnDelay = 6f;
+    [SerializeField] float respawnDelayAfterPickup = 4f;
     [SerializeField] Vector2 spawnIntervalRange = new Vector2(10f, 16f);
     [SerializeField] int maxActivePickups = 3;
     [SerializeField] float wallPadding = 2f;
@@ -56,12 +57,15 @@ public sealed class WeaponModuleSpawner : MonoBehaviour
 
     readonly List<WeaponModulePickup> _activePickups = new List<WeaponModulePickup>();
     Coroutine _spawnRoutine;
+    float _nextSpawnTime;
 
     void Awake()
     {
         ResolveReferences();
         if (spawnTable == null || spawnTable.Length == 0)
             spawnTable = CreateDefaultSpawnTable();
+        RegisterExistingPickups();
+        _nextSpawnTime = Time.time + Mathf.Max(0f, initialSpawnDelay);
     }
 
     void OnEnable()
@@ -77,23 +81,28 @@ public sealed class WeaponModuleSpawner : MonoBehaviour
             StopCoroutine(_spawnRoutine);
             _spawnRoutine = null;
         }
+
+        for (int i = 0; i < _activePickups.Count; i++)
+        {
+            if (_activePickups[i] != null)
+                _activePickups[i].Consumed -= HandlePickupConsumed;
+        }
     }
 
     IEnumerator SpawnLoop()
     {
-        if (initialSpawnDelay > 0f)
-            yield return new WaitForSeconds(initialSpawnDelay);
-
         while (enabled)
         {
             CleanupDestroyedPickups();
-            if (_activePickups.Count < maxActivePickups && TrySpawnPickup())
-                CleanupDestroyedPickups();
+            if (_activePickups.Count < maxActivePickups && Time.time >= _nextSpawnTime)
+            {
+                if (TrySpawnPickup())
+                    ScheduleNextSpawn(GetRandomSpawnDelay());
+                else
+                    ScheduleNextSpawn(1f);
+            }
 
-            float delay = UnityEngine.Random.Range(
-                Mathf.Min(spawnIntervalRange.x, spawnIntervalRange.y),
-                Mathf.Max(spawnIntervalRange.x, spawnIntervalRange.y));
-            yield return new WaitForSeconds(Mathf.Max(1f, delay));
+            yield return new WaitForSeconds(0.5f);
         }
     }
 
@@ -123,7 +132,7 @@ public sealed class WeaponModuleSpawner : MonoBehaviour
             entry.PickupColor,
             entry.PickupScale);
 
-        _activePickups.Add(pickup);
+        RegisterPickup(pickup);
         return true;
     }
 
@@ -219,7 +228,56 @@ public sealed class WeaponModuleSpawner : MonoBehaviour
 
     void CleanupDestroyedPickups()
     {
-        _activePickups.RemoveAll(pickup => pickup == null || !pickup.gameObject.activeInHierarchy);
+        for (int i = _activePickups.Count - 1; i >= 0; i--)
+        {
+            var pickup = _activePickups[i];
+            if (pickup != null && pickup.gameObject.activeInHierarchy)
+                continue;
+
+            UnregisterPickup(pickup);
+        }
+    }
+
+    void RegisterPickup(WeaponModulePickup pickup)
+    {
+        if (pickup == null || _activePickups.Contains(pickup))
+            return;
+
+        pickup.Consumed += HandlePickupConsumed;
+        _activePickups.Add(pickup);
+    }
+
+    void UnregisterPickup(WeaponModulePickup pickup)
+    {
+        if (pickup != null)
+            pickup.Consumed -= HandlePickupConsumed;
+
+        _activePickups.Remove(pickup);
+    }
+
+    void RegisterExistingPickups()
+    {
+        var existingPickups = GetComponentsInChildren<WeaponModulePickup>(true);
+        for (int i = 0; i < existingPickups.Length; i++)
+            RegisterPickup(existingPickups[i]);
+    }
+
+    void HandlePickupConsumed(WeaponModulePickup pickup)
+    {
+        UnregisterPickup(pickup);
+        ScheduleNextSpawn(respawnDelayAfterPickup);
+    }
+
+    void ScheduleNextSpawn(float delay)
+    {
+        _nextSpawnTime = Time.time + Mathf.Max(0.25f, delay);
+    }
+
+    float GetRandomSpawnDelay()
+    {
+        return UnityEngine.Random.Range(
+            Mathf.Min(spawnIntervalRange.x, spawnIntervalRange.y),
+            Mathf.Max(spawnIntervalRange.x, spawnIntervalRange.y));
     }
 
     static SpawnEntry[] CreateDefaultSpawnTable()

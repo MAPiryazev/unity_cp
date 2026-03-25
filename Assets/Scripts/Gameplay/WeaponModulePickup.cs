@@ -28,9 +28,11 @@ public sealed class WeaponModulePickup : MonoBehaviour
 
     public WeaponModifierDefinition ModuleDefinition => moduleDefinition;
     public float EffectDuration => Mathf.Max(0.1f, effectDuration);
+    public event System.Action<WeaponModulePickup> Consumed;
 
     void Awake()
     {
+        EnsureSpawnerExists();
         BuildVisualIfNeeded();
         ApplyVisualState();
     }
@@ -80,6 +82,7 @@ public sealed class WeaponModulePickup : MonoBehaviour
             return;
 
         _pickedUp = true;
+        Consumed?.Invoke(this);
         if (destroyOnPickup)
             Destroy(gameObject);
         else
@@ -202,5 +205,15 @@ public sealed class WeaponModulePickup : MonoBehaviour
         var targetMaterial = Application.isPlaying ? renderer.material : renderer.sharedMaterial;
         if (targetMaterial != null)
             targetMaterial.color = color;
+    }
+
+    void EnsureSpawnerExists()
+    {
+        if (FindFirstObjectByType<WeaponModuleSpawner>() != null)
+            return;
+
+        var host = transform.parent != null ? transform.parent.gameObject : gameObject;
+        if (host.GetComponent<WeaponModuleSpawner>() == null)
+            host.AddComponent<WeaponModuleSpawner>();
     }
 }
