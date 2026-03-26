@@ -9,9 +9,12 @@ public sealed class GameplayZone : MonoBehaviour
 
     void Reset()
     {
-        var trigger = GetComponent<Collider>();
-        if (trigger != null)
-            trigger.isTrigger = true;
+        EnsureTriggerCollider();
+    }
+
+    void OnValidate()
+    {
+        EnsureTriggerCollider();
     }
 
     void OnTriggerEnter(Collider other)
@@ -36,5 +39,12 @@ public sealed class GameplayZone : MonoBehaviour
             return false;
 
         return affectTriggers || !other.isTrigger;
+    }
+
+    void EnsureTriggerCollider()
+    {
+        var trigger = GetComponent<Collider>();
+        if (trigger != null)
+            trigger.isTrigger = true;
     }
 }

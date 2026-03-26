@@ -70,11 +70,7 @@ public sealed class RaycastShooting : MonoBehaviour
         RefreshResolvedWeapon();
         EnsureTracerRoot();
         CleanupLegacyTracerComponents();
-        _audio = GetComponent<AudioSource>();
-        if (_audio == null)
-            _audio = gameObject.AddComponent<AudioSource>();
-        _audio.playOnAwake = false;
-        _audio.spatialBlend = 0f;
+        EnsureAudioSource();
         EnsureModifierHud();
     }
 
@@ -87,6 +83,17 @@ public sealed class RaycastShooting : MonoBehaviour
         }
 
         DisableAllTracers();
+    }
+
+    void OnDestroy()
+    {
+        if (_tracerMaterial == null)
+            return;
+
+        if (Application.isPlaying)
+            Destroy(_tracerMaterial);
+        else
+            DestroyImmediate(_tracerMaterial);
     }
 
     void OnValidate()
@@ -106,15 +113,8 @@ public sealed class RaycastShooting : MonoBehaviour
         if (!ShouldFireThisUpdate())
             return;
 
-        var gap = 1f / _resolvedWeapon.ShotsPerSecond;
-        if (Time.time < _nextShotTime)
+        if (!TryBeginShot())
             return;
-
-        if (preventSameFrameDoubleShot && Time.frameCount == _lastShotFrame)
-            return;
-
-        _nextShotTime = Time.time + gap;
-        _lastShotFrame = Time.frameCount;
         FireOnce();
     }
 
@@ -179,15 +179,8 @@ public sealed class RaycastShooting : MonoBehaviour
         if (modifier == null)
             return;
 
-        for (int i = 0; i < _temporaryModules.Count; i++)
-        {
-            if (!_temporaryModules[i].Matches(modifier))
-                continue;
-
-            _temporaryModules[i].Refresh(duration);
-            NotifyTemporaryModifiersChanged();
+        if (TryRefreshModifier(modifier, duration))
             return;
-        }
 
         _temporaryModules.Add(new WeaponModifierRuntimeInstance(modifier, duration));
         RefreshResolvedWeapon();
@@ -199,15 +192,8 @@ public sealed class RaycastShooting : MonoBehaviour
         if (!modifierTemplate.HasEffect)
             return;
 
-        for (int i = 0; i < _temporaryModules.Count; i++)
-        {
-            if (!_temporaryModules[i].Matches(modifierTemplate))
-                continue;
-
-            _temporaryModules[i].Refresh(duration);
-            NotifyTemporaryModifiersChanged();
+        if (TryRefreshModifier(modifierTemplate, duration))
             return;
-        }
 
         _temporaryModules.Add(new WeaponModifierRuntimeInstance(modifierTemplate, duration));
         RefreshResolvedWeapon();
@@ -373,6 +359,8 @@ public sealed class RaycastShooting : MonoBehaviour
             shader = Shader.Find("Sprites/Default");
         if (shader == null)
             shader = Shader.Find("Unlit/Color");
+        if (shader == null)
+            return null;
         var mat = new Material(shader);
         if (mat.HasProperty("_BaseColor"))
             mat.SetColor("_BaseColor", Color.white);
@@ -514,10 +502,43 @@ public sealed class RaycastShooting : MonoBehaviour
         if (keyboard == null || weaponLoadout == null || weaponLoadout.Length == 0)
             return;
 
-        if (keyboard.digit1Key.wasPressedThisFrame)
-            TrySelectWeaponSlot(0);
-        else if (keyboard.digit2Key.wasPressedThisFrame)
-            TrySelectWeaponSlot(1);
+        int selectedSlot = GetPressedWeaponSlot(keyboard);
+        if (selectedSlot < 0 || selectedSlot >= weaponLoadout.Length)
+            return;
+
+        TrySelectWeaponSlot(selectedSlot);
+    }
+
+    bool TryBeginShot()
+    {
+        if (Time.time < _nextShotTime)
+            return false;
+
+        if (preventSameFrameDoubleShot && Time.frameCount == _lastShotFrame)
+            return false;
+
+        _nextShotTime = Time.time + GetShotCooldown();
+        _lastShotFrame = Time.frameCount;
+        return true;
+    }
+
+    float GetShotCooldown()
+    {
+        return 1f / _resolvedWeapon.ShotsPerSecond;
+    }
+
+    static int GetPressedWeaponSlot(Keyboard keyboard)
+    {
+        if (keyboard.digit1Key.wasPressedThisFrame) return 0;
+        if (keyboard.digit2Key.wasPressedThisFrame) return 1;
+        if (keyboard.digit3Key.wasPressedThisFrame) return 2;
+        if (keyboard.digit4Key.wasPressedThisFrame) return 3;
+        if (keyboard.digit5Key.wasPressedThisFrame) return 4;
+        if (keyboard.digit6Key.wasPressedThisFrame) return 5;
+        if (keyboard.digit7Key.wasPressedThisFrame) return 6;
+        if (keyboard.digit8Key.wasPressedThisFrame) return 7;
+        if (keyboard.digit9Key.wasPressedThisFrame) return 8;
+        return -1;
     }
 
     HitscanWeaponDefinition ResolveActiveWeaponDefinition()
@@ -567,6 +588,45 @@ public sealed class RaycastShooting : MonoBehaviour
     void NotifyTemporaryModifiersChanged()
     {
         TemporaryModifiersChanged?.Invoke(_temporaryModules);
+    }
+
+    bool TryRefreshModifier(WeaponModifierDefinition modifier, float duration)
+    {
+        for (int i = 0; i < _temporaryModules.Count; i++)
+        {
+            if (!_temporaryModules[i].Matches(modifier))
+                continue;
+
+            _temporaryModules[i].Refresh(duration);
+            NotifyTemporaryModifiersChanged();
+            return true;
+        }
+
+        return false;
+    }
+
+    bool TryRefreshModifier(StatWeaponModifierTemplate modifierTemplate, float duration)
+    {
+        for (int i = 0; i < _temporaryModules.Count; i++)
+        {
+            if (!_temporaryModules[i].Matches(modifierTemplate))
+                continue;
+
+            _temporaryModules[i].Refresh(duration);
+            NotifyTemporaryModifiersChanged();
+            return true;
+        }
+
+        return false;
+    }
+
+    void EnsureAudioSource()
+    {
+        _audio = GetComponent<AudioSource>();
+        if (_audio == null)
+            _audio = gameObject.AddComponent<AudioSource>();
+        _audio.playOnAwake = false;
+        _audio.spatialBlend = 0f;
     }
 
     void EnsureModifierHud()

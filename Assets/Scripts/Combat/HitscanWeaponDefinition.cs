@@ -38,7 +38,17 @@ public sealed class HitscanWeaponDefinition : ScriptableObject
         return defaults;
     }
 
+    void OnEnable()
+    {
+        ClampSettings();
+    }
+
     void OnValidate()
+    {
+        ClampSettings();
+    }
+
+    void ClampSettings()
     {
         settings.Clamp();
     }

@@ -11,13 +11,17 @@ public sealed class SimpleEnemyController : MonoBehaviour
     [SerializeField] float attackRange = 1.15f;
     [SerializeField] float attackCooldown = 0.75f;
     [SerializeField] string targetName = "Player";
+    [SerializeField] bool allowSceneLookupFallback = true;
+    [SerializeField] float targetLookupInterval = 0.5f;
     [SerializeField] float separationRadius = 1.05f;
     [SerializeField] float separationWeight = 1.35f;
     [SerializeField] LayerMask separationLayers;
 
     Transform _target;
     Collider _selfCollider;
+    Health _health;
     float _nextAttackTime;
+    float _nextTargetLookupTime;
 
     public void Initialize(Transform target, EnemyDefinition definition)
     {
@@ -29,6 +33,7 @@ public sealed class SimpleEnemyController : MonoBehaviour
     void Awake()
     {
         _selfCollider = GetComponent<Collider>();
+        _health = GetComponent<Health>();
         ApplyDefinition();
         if (separationLayers.value == 0)
             separationLayers = LayerMask.GetMask("Enemy");
@@ -36,10 +41,7 @@ public sealed class SimpleEnemyController : MonoBehaviour
 
     void Update()
     {
-        if (_target == null)
-            _target = ResolveTarget();
-
-        if (_target == null)
+        if (!TryEnsureTarget())
             return;
 
         var toTarget = _target.position - transform.position;
@@ -65,9 +67,8 @@ public sealed class SimpleEnemyController : MonoBehaviour
         moveSpeed = enemyDefinition.MoveSpeed;
         contactDamage = enemyDefinition.ContactDamage;
 
-        var health = GetComponent<Health>();
-        if (health != null)
-            health.SetMaxHealth(enemyDefinition.MaxHealth);
+        if (_health != null)
+            _health.SetMaxHealth(enemyDefinition.MaxHealth);
     }
 
     void TryDealContactDamage()
@@ -90,6 +91,22 @@ public sealed class SimpleEnemyController : MonoBehaviour
 
         var player = FindFirstObjectByType<PlayerMovement>();
         return player != null ? player.transform : null;
+    }
+
+    bool TryEnsureTarget()
+    {
+        if (_target != null)
+            return true;
+
+        if (!allowSceneLookupFallback)
+            return false;
+
+        if (Time.time < _nextTargetLookupTime)
+            return false;
+
+        _nextTargetLookupTime = Time.time + Mathf.Max(0.1f, targetLookupInterval);
+        _target = ResolveTarget();
+        return _target != null;
     }
 
     Vector3 ComputeSeparationOffset()

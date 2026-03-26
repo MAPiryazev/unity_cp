@@ -11,7 +11,17 @@ public sealed class EnemyDefinition : ScriptableObject
     public float MoveSpeed => moveSpeed;
     public float ContactDamage => contactDamage;
 
+    void OnEnable()
+    {
+        ClampValues();
+    }
+
     void OnValidate()
+    {
+        ClampValues();
+    }
+
+    void ClampValues()
     {
         maxHealth = Mathf.Max(1f, maxHealth);
         moveSpeed = Mathf.Max(0f, moveSpeed);

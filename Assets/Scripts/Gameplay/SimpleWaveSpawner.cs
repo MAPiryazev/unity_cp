@@ -14,10 +14,21 @@ public sealed class SimpleWaveSpawner : MonoBehaviour
     [SerializeField] float delayBetweenWaves = 2f;
     [SerializeField] float spawnPaddingFromWall = 1.5f;
     [SerializeField] bool autoStart = true;
+    [SerializeField] bool allowSceneLookupFallback = true;
+    [SerializeField] float referenceLookupInterval = 1f;
 
     readonly HashSet<Health> _aliveEnemies = new HashSet<Health>();
     int _waveIndex;
     Coroutine _loopRoutine;
+    float _nextReferenceLookupTime;
+
+    public void Initialize(Transform target, ArenaBootstrap arenaBootstrap, EnemyDefinition definition = null)
+    {
+        playerTarget = target;
+        arena = arenaBootstrap;
+        if (definition != null)
+            enemyDefinition = definition;
+    }
 
     void Start()
     {
@@ -29,7 +40,10 @@ public sealed class SimpleWaveSpawner : MonoBehaviour
     void OnDisable()
     {
         if (_loopRoutine != null)
+        {
             StopCoroutine(_loopRoutine);
+            _loopRoutine = null;
+        }
 
         foreach (var health in _aliveEnemies)
         {
@@ -64,7 +78,9 @@ public sealed class SimpleWaveSpawner : MonoBehaviour
 
     void SpawnEnemy()
     {
-        ResolveSceneReferences();
+        if (!EnsureSpawnReferences())
+            return;
+
         var enemyObject = SimpleEnemyFactory.CreateEnemy(GetSpawnPosition(), playerTarget, enemyDefinition);
         var health = enemyObject.GetComponent<Health>();
         if (health == null)
@@ -104,7 +120,23 @@ public sealed class SimpleWaveSpawner : MonoBehaviour
         }
 
         if (arena == null)
-            arena = FindFirstObjectByType<ArenaBootstrap>();
+            arena = GetComponent<ArenaBootstrap>() ?? FindFirstObjectByType<ArenaBootstrap>();
+    }
+
+    bool EnsureSpawnReferences()
+    {
+        if (playerTarget != null)
+            return true;
+
+        if (!allowSceneLookupFallback)
+            return false;
+
+        if (Time.time < _nextReferenceLookupTime)
+            return false;
+
+        _nextReferenceLookupTime = Time.time + Mathf.Max(0.1f, referenceLookupInterval);
+        ResolveSceneReferences();
+        return playerTarget != null;
     }
 
     Vector3 GetSpawnPosition()
