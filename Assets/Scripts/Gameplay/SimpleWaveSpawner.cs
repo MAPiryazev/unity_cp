@@ -5,6 +5,8 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class SimpleWaveSpawner : MonoBehaviour
 {
+    const float MinReferenceLookupInterval = 0.1f;
+
     [SerializeField] EnemyDefinition enemyDefinition;
     [SerializeField] Transform playerTarget;
     [SerializeField] ArenaBootstrap arena;
@@ -22,6 +24,9 @@ public sealed class SimpleWaveSpawner : MonoBehaviour
     Coroutine _loopRoutine;
     float _nextReferenceLookupTime;
 
+    public int CurrentWaveIndex => _waveIndex + 1;
+    public event System.Action<int> WaveStarted;
+
     public void Initialize(Transform target, ArenaBootstrap arenaBootstrap, EnemyDefinition definition = null)
     {
         playerTarget = target;
@@ -33,8 +38,7 @@ public sealed class SimpleWaveSpawner : MonoBehaviour
     void Start()
     {
         ResolveSceneReferences();
-        if (autoStart)
-            _loopRoutine = StartCoroutine(SpawnLoop());
+        TryStartLoop();
     }
 
     void OnDisable()
@@ -59,6 +63,7 @@ public sealed class SimpleWaveSpawner : MonoBehaviour
         while (true)
         {
             yield return new WaitForSeconds(delayBetweenWaves);
+            WaveStarted?.Invoke(CurrentWaveIndex);
             yield return SpawnWave();
             yield return new WaitUntil(() => _aliveEnemies.Count == 0);
             _waveIndex++;
@@ -90,7 +95,7 @@ public sealed class SimpleWaveSpawner : MonoBehaviour
         health.Died += HandleEnemyDeath;
     }
 
-    void HandleEnemyDeath(DamageInfo damageInfo)
+    void HandleEnemyDeath(DamageInfo _)
     {
         CleanupDeadEnemies();
     }
@@ -134,9 +139,17 @@ public sealed class SimpleWaveSpawner : MonoBehaviour
         if (Time.time < _nextReferenceLookupTime)
             return false;
 
-        _nextReferenceLookupTime = Time.time + Mathf.Max(0.1f, referenceLookupInterval);
+        _nextReferenceLookupTime = Time.time + Mathf.Max(MinReferenceLookupInterval, referenceLookupInterval);
         ResolveSceneReferences();
         return playerTarget != null;
+    }
+
+    void TryStartLoop()
+    {
+        if (!autoStart || _loopRoutine != null)
+            return;
+
+        _loopRoutine = StartCoroutine(SpawnLoop());
     }
 
     Vector3 GetSpawnPosition()

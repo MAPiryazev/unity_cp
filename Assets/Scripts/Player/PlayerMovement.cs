@@ -11,9 +11,36 @@ public sealed class PlayerMovement : MonoBehaviour
     [SerializeField] float aimTurnSpeedDegrees = 540f;
 
     CharacterController _characterController;
+    ZoneEffectReceiver _zoneEffects;
     Vector3 _verticalVelocity;
 
-    void Awake() => _characterController = GetComponent<CharacterController>();
+    void Awake()
+    {
+        _characterController = GetComponent<CharacterController>();
+        _zoneEffects = GetComponent<ZoneEffectReceiver>();
+
+        // `GameplayZone` listens for `OnTriggerEnter(Collider)`. `CharacterController` is not a `Collider`,
+        // so we add a lightweight trigger collider to the player.
+        EnsureTriggerColliderForZones();
+    }
+
+    void EnsureTriggerColliderForZones()
+    {
+        if (_characterController == null)
+            return;
+
+        // If you already have a collider on the player, don't duplicate it.
+        var existingCollider = GetComponent<Collider>();
+        if (existingCollider != null)
+            return;
+
+        var capsule = gameObject.AddComponent<CapsuleCollider>();
+        capsule.isTrigger = true;
+        capsule.radius = _characterController.radius;
+        capsule.height = _characterController.height;
+        capsule.center = _characterController.center;
+        capsule.direction = 1; // Y axis
+    }
 
     void Update()
     {
@@ -22,7 +49,7 @@ public sealed class PlayerMovement : MonoBehaviour
         if (direction.sqrMagnitude > 1f)
             direction.Normalize();
 
-        var move = direction * (moveSpeed * Time.deltaTime);
+        var move = direction * (GetEffectiveMoveSpeed() * Time.deltaTime);
         _characterController.Move(move);
 
         if (_characterController.isGrounded && _verticalVelocity.y < 0f)
@@ -51,7 +78,23 @@ public sealed class PlayerMovement : MonoBehaviour
 
         var target = Quaternion.LookRotation(aimDirection, Vector3.up);
         transform.rotation = Quaternion.RotateTowards(
-            transform.rotation, target, aimTurnSpeedDegrees * Time.deltaTime);
+            transform.rotation, target, GetEffectiveAimTurnSpeed() * Time.deltaTime);
+    }
+
+    float GetEffectiveMoveSpeed()
+    {
+        if (_zoneEffects == null)
+            _zoneEffects = GetComponent<ZoneEffectReceiver>();
+
+        return moveSpeed * (_zoneEffects != null ? _zoneEffects.MovementMultiplier : 1f);
+    }
+
+    float GetEffectiveAimTurnSpeed()
+    {
+        if (_zoneEffects == null)
+            _zoneEffects = GetComponent<ZoneEffectReceiver>();
+
+        return aimTurnSpeedDegrees * (_zoneEffects != null ? _zoneEffects.AimTurnMultiplier : 1f);
     }
 
     void ReadMoveInput(out float x, out float z)

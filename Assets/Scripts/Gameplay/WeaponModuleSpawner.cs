@@ -6,6 +6,8 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class WeaponModuleSpawner : MonoBehaviour
 {
+    const float MinDelay = 0.25f;
+
     [Serializable]
     struct SpawnEntry
     {
@@ -62,10 +64,16 @@ public sealed class WeaponModuleSpawner : MonoBehaviour
     void Awake()
     {
         ResolveReferences();
+        ClampConfig();
         if (spawnTable == null || spawnTable.Length == 0)
             spawnTable = CreateDefaultSpawnTable();
         RegisterExistingPickups();
         _nextSpawnTime = Time.time + Mathf.Max(0f, initialSpawnDelay);
+    }
+
+    void OnValidate()
+    {
+        ClampConfig();
     }
 
     void OnEnable()
@@ -270,7 +278,7 @@ public sealed class WeaponModuleSpawner : MonoBehaviour
 
     void ScheduleNextSpawn(float delay)
     {
-        _nextSpawnTime = Time.time + Mathf.Max(0.25f, delay);
+        _nextSpawnTime = Time.time + Mathf.Max(MinDelay, delay);
     }
 
     float GetRandomSpawnDelay()
@@ -278,6 +286,17 @@ public sealed class WeaponModuleSpawner : MonoBehaviour
         return UnityEngine.Random.Range(
             Mathf.Min(spawnIntervalRange.x, spawnIntervalRange.y),
             Mathf.Max(spawnIntervalRange.x, spawnIntervalRange.y));
+    }
+
+    void ClampConfig()
+    {
+        initialSpawnDelay = Mathf.Max(0f, initialSpawnDelay);
+        respawnDelayAfterPickup = Mathf.Max(MinDelay, respawnDelayAfterPickup);
+        maxActivePickups = Mathf.Max(1, maxActivePickups);
+        wallPadding = Mathf.Max(0f, wallPadding);
+        minDistanceFromPlayer = Mathf.Max(0f, minDistanceFromPlayer);
+        minDistanceBetweenPickups = Mathf.Max(0f, minDistanceBetweenPickups);
+        spawnPositionAttempts = Mathf.Max(1, spawnPositionAttempts);
     }
 
     static SpawnEntry[] CreateDefaultSpawnTable()

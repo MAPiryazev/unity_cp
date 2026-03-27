@@ -39,9 +39,7 @@ public sealed class WeaponModulePickup : MonoBehaviour
 
     void Reset()
     {
-        var trigger = GetComponent<Collider>();
-        if (trigger != null)
-            trigger.isTrigger = true;
+        EnsureTriggerCollider();
     }
 
     void OnValidate()
@@ -50,6 +48,7 @@ public sealed class WeaponModulePickup : MonoBehaviour
         rotationSpeed = Mathf.Max(0f, rotationSpeed);
         bobHeight = Mathf.Max(0f, bobHeight);
         bobSpeed = Mathf.Max(0f, bobSpeed);
+        EnsureTriggerCollider();
         EnsureFallbackVisualColor();
         if (!Application.isPlaying)
         {
@@ -144,30 +143,14 @@ public sealed class WeaponModulePickup : MonoBehaviour
                 visualObject.name = visualName;
                 visualObject.transform.SetParent(transform, false);
 
-                var collider = visualObject.GetComponent<Collider>();
-                if (collider != null)
-                {
-                    if (Application.isPlaying)
-                        Destroy(collider);
-                    else
-                        DestroyImmediate(collider);
-                }
+                RemoveCollider(visualObject.GetComponent<Collider>());
 
                 _visual = visualObject.transform;
             }
         }
 
         if (_visual != null)
-        {
-            var visualCollider = _visual.GetComponent<Collider>();
-            if (visualCollider != null)
-            {
-                if (Application.isPlaying)
-                    Destroy(visualCollider);
-                else
-                    DestroyImmediate(visualCollider);
-            }
-        }
+            RemoveCollider(_visual.GetComponent<Collider>());
 
         if (_visualRenderer == null && _visual != null)
             _visualRenderer = _visual.GetComponent<Renderer>();
@@ -215,5 +198,23 @@ public sealed class WeaponModulePickup : MonoBehaviour
         var host = transform.parent != null ? transform.parent.gameObject : gameObject;
         if (host.GetComponent<WeaponModuleSpawner>() == null)
             host.AddComponent<WeaponModuleSpawner>();
+    }
+
+    void EnsureTriggerCollider()
+    {
+        var trigger = GetComponent<Collider>();
+        if (trigger != null)
+            trigger.isTrigger = true;
+    }
+
+    static void RemoveCollider(Collider collider)
+    {
+        if (collider == null)
+            return;
+
+        if (Application.isPlaying)
+            Destroy(collider);
+        else
+            DestroyImmediate(collider);
     }
 }

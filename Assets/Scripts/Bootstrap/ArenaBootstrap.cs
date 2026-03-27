@@ -64,5 +64,9 @@ public sealed class ArenaBootstrap : MonoBehaviour
     {
         if (GetComponent<WeaponModuleSpawner>() == null)
             gameObject.AddComponent<WeaponModuleSpawner>();
+        if (GetComponent<SurvivalGameFlow>() == null)
+            gameObject.AddComponent<SurvivalGameFlow>();
+        if (GetComponent<GameplayZoneSpawner>() == null)
+            gameObject.AddComponent<GameplayZoneSpawner>();
     }
 }

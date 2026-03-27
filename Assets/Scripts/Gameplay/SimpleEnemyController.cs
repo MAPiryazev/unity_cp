@@ -20,6 +20,7 @@ public sealed class SimpleEnemyController : MonoBehaviour
     Transform _target;
     Collider _selfCollider;
     Health _health;
+    ZoneEffectReceiver _zoneEffects;
     float _nextAttackTime;
     float _nextTargetLookupTime;
 
@@ -34,6 +35,7 @@ public sealed class SimpleEnemyController : MonoBehaviour
     {
         _selfCollider = GetComponent<Collider>();
         _health = GetComponent<Health>();
+        _zoneEffects = GetComponent<ZoneEffectReceiver>();
         ApplyDefinition();
         if (separationLayers.value == 0)
             separationLayers = LayerMask.GetMask("Enemy");
@@ -53,7 +55,7 @@ public sealed class SimpleEnemyController : MonoBehaviour
         }
 
         var moveDirection = (toTarget.normalized + ComputeSeparationOffset()).normalized;
-        transform.position += moveDirection * (moveSpeed * Time.deltaTime);
+        transform.position += moveDirection * (GetEffectiveMoveSpeed() * Time.deltaTime);
 
         if (moveDirection.sqrMagnitude > 0.0001f)
             transform.rotation = Quaternion.LookRotation(moveDirection, Vector3.up);
@@ -76,8 +78,8 @@ public sealed class SimpleEnemyController : MonoBehaviour
         if (Time.time < _nextAttackTime || _target == null)
             return;
 
-        if (DamageUtility.TryApplyDamage(_target.GetComponent<Health>(), new DamageInfo(contactDamage, _target.position, transform.forward, gameObject)))
-            _nextAttackTime = Time.time + attackCooldown;
+        if (DamageUtility.TryApplyDamage(_target.GetComponent<Health>(), new DamageInfo(GetEffectiveContactDamage(), _target.position, transform.forward, gameObject)))
+            _nextAttackTime = Time.time + GetEffectiveAttackCooldown();
     }
 
     Transform ResolveTarget()
@@ -140,5 +142,29 @@ public sealed class SimpleEnemyController : MonoBehaviour
         }
 
         return push * separationWeight;
+    }
+
+    float GetEffectiveMoveSpeed()
+    {
+        if (_zoneEffects == null)
+            _zoneEffects = GetComponent<ZoneEffectReceiver>();
+
+        return moveSpeed * (_zoneEffects != null ? _zoneEffects.MovementMultiplier : 1f);
+    }
+
+    float GetEffectiveContactDamage()
+    {
+        if (_zoneEffects == null)
+            _zoneEffects = GetComponent<ZoneEffectReceiver>();
+
+        return contactDamage * (_zoneEffects != null ? _zoneEffects.ContactDamageMultiplier : 1f);
+    }
+
+    float GetEffectiveAttackCooldown()
+    {
+        if (_zoneEffects == null)
+            _zoneEffects = GetComponent<ZoneEffectReceiver>();
+
+        return attackCooldown * (_zoneEffects != null ? _zoneEffects.AttackCooldownMultiplier : 1f);
     }
 }

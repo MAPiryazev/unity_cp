@@ -7,6 +7,14 @@ public sealed class GameplayZone : MonoBehaviour
     [SerializeField] ZoneEffectDefinition effect;
     [SerializeField] bool affectTriggers;
 
+    public ZoneEffectDefinition Effect => effect;
+
+    public void Configure(ZoneEffectDefinition effectDefinition, bool shouldAffectTriggers = false)
+    {
+        effect = effectDefinition;
+        affectTriggers = shouldAffectTriggers;
+    }
+
     void Reset()
     {
         EnsureTriggerCollider();

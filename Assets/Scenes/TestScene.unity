@@ -145,7 +145,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 88596623}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.35, z: 0}
   m_LocalScale: {x: 0.45, y: 0.2, z: 0.45}
   m_ConstrainProportionsScale: 0
@@ -256,11 +256,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponModulePickup
   moduleDefinition: {fileID: 0}
+  runtimeModifier:
+    displayName: 
+    description: 
+    damageDelta: 0
+    damageMultiplier: 0
+    rangeDelta: 0
+    shotsPerSecondDelta: 0
+    shotsPerSecondMultiplier: 0
+    projectileCountDelta: 0
+    spreadAngleDelta: 0
+    tracerWidthDelta: 0
+    tracerDurationDelta: 0
+  effectDuration: 12
   rotationSpeed: 75
+  bobHeight: 0.12
+  bobSpeed: 2
   destroyOnPickup: 1
   visualName: Visual
   visualScale: {x: 0.45, y: 0.2, z: 0.45}
   visualOffset: {x: 0, y: 0.35, z: 0}
+  visualColor: {r: 0.35, g: 0.8, b: 1, a: 1}
 --- !u!65 &174018973
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -417,8 +433,8 @@ Material:
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _Color: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    - _BaseColor: {r: 0.35, g: 0.8, b: 1, a: 1}
+    - _Color: {r: 0.34999996, g: 0.8, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
@@ -470,11 +486,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponModulePickup
   moduleDefinition: {fileID: 0}
+  runtimeModifier:
+    displayName: 
+    description: 
+    damageDelta: 0
+    damageMultiplier: 0
+    rangeDelta: 0
+    shotsPerSecondDelta: 0
+    shotsPerSecondMultiplier: 0
+    projectileCountDelta: 0
+    spreadAngleDelta: 0
+    tracerWidthDelta: 0
+    tracerDurationDelta: 0
+  effectDuration: 12
   rotationSpeed: 75
+  bobHeight: 0.12
+  bobSpeed: 2
   destroyOnPickup: 1
   visualName: Visual
   visualScale: {x: 0.45, y: 0.2, z: 0.45}
   visualOffset: {x: 0, y: 0.35, z: 0}
+  visualColor: {r: 0.35, g: 0.8, b: 1, a: 1}
 --- !u!65 &228275391
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -870,6 +902,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 900000002}
+  - component: {fileID: 900000006}
+  - component: {fileID: 900000005}
+  - component: {fileID: 900000004}
+  - component: {fileID: 900000003}
   m_Layer: 0
   m_Name: TestSandbox
   m_TagString: Untagged
@@ -897,6 +933,98 @@ Transform:
   - {fileID: 931000141}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &900000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa07b1f5c8344ad5951bd8782212c1a6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponModuleSpawner
+  arena: {fileID: 0}
+  playerTarget: {fileID: 0}
+  initialSpawnDelay: 6
+  respawnDelayAfterPickup: 4
+  spawnIntervalRange: {x: 10, y: 16}
+  maxActivePickups: 3
+  wallPadding: 2
+  minDistanceFromPlayer: 4
+  minDistanceBetweenPickups: 2.5
+  spawnPositionAttempts: 20
+  spawnTable: []
+--- !u!114 &900000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dfe4878f403a7874a8370865654ea43a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameplayZoneSpawner
+  arena: {fileID: 900000006}
+  playerTarget: {fileID: 920500002}
+  defaultEffects: []
+  spawnIntervalRange: {x: 12, y: 20}
+  lifetimeRange: {x: 7, y: 12}
+  maxActiveZones: 2
+  wallPadding: 2
+  minDistanceFromPlayer: 4
+  spawnPositionAttempts: 20
+  spawnTable:
+  - effect: {fileID: 11400000, guid: 15f3371fbc5fa0a459f909de9c6f6a4c, type: 2}
+    weight: 1
+    visualColor: {r: 0.8039216, g: 0.5215687, b: 0.2470588, a: 1}
+    radius: 0.8
+  - effect: {fileID: 11400000, guid: c052f4e674133cf4b9a4592deb9bfa9b, type: 2}
+    weight: 3
+    visualColor: {r: 0.6, g: 0.6, b: 0.6, a: 1}
+    radius: 3.5
+  debugLogs: 0
+--- !u!114 &900000005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8972e9a4b300e25468d5f5dcaa42c93b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurvivalGameFlow
+  playerHealth: {fileID: 920500015}
+  waveSpawner: {fileID: 940100003}
+  pauseGameOnDeath: 1
+  statsAnchorMin: {x: 0.38, y: 0.93}
+  statsAnchorMax: {x: 0.62, y: 0.99}
+  statsTextColor: {r: 0.95, g: 0.97, b: 1, a: 1}
+  statsFontSize: 20
+  overlayColor: {r: 0, g: 0, b: 0, a: 0.72}
+  panelColor: {r: 0.08, g: 0.1, b: 0.15, a: 0.95}
+  buttonColor: {r: 0.2, g: 0.35, b: 0.95, a: 1}
+  buttonTextColor: {r: 1, g: 1, b: 1, a: 1}
+--- !u!114 &900000006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1b9d72c4a6f8e0b3d5c9a7f2468e1b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ArenaBootstrap
+  halfExtent: 14
+  wallHeight: 3
+  wallThickness: 0.5
 --- !u!1 &920500001
 GameObject:
   m_ObjectHideFlags: 0
@@ -1084,6 +1212,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 423d5af8e3ba4138a5ddbfc9ee7761ee, type: 2}
   startingWeaponIndex: 0
   installedModules: []
+  defaultTemporaryModifierDuration: 12
   aimCamera: {fileID: 330585545}
   damage: 10
   maxRange: 40
@@ -1756,7 +1885,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyDefinition: {fileID: 11400000, guid: e51738ea26ae4424921dd4cf0262367d, type: 2}
-  waveSequence: []
   playerTarget: {fileID: 920500002}
   arena: {fileID: 0}
   startingEnemyCount: 2
@@ -1765,6 +1893,8 @@ MonoBehaviour:
   delayBetweenWaves: 1.5
   spawnPaddingFromWall: 1.5
   autoStart: 1
+  allowSceneLookupFallback: 1
+  referenceLookupInterval: 1
 --- !u!21 &1311541782
 Material:
   serializedVersion: 8
@@ -1900,8 +2030,8 @@ Material:
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _Color: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    - _BaseColor: {r: 0.35, g: 0.8, b: 1, a: 1}
+    - _Color: {r: 0.34999996, g: 0.8, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
@@ -1932,7 +2062,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1960140699}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.35, z: 0}
   m_LocalScale: {x: 0.45, y: 0.2, z: 0.45}
   m_ConstrainProportionsScale: 0

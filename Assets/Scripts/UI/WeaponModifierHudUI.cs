@@ -52,6 +52,9 @@ public sealed class WeaponModifierHudUI : MonoBehaviour
 
     void Update()
     {
+        if (_rows.Count == 0)
+            return;
+
         RefreshRowTexts();
     }
 

@@ -19,15 +19,8 @@ public static class DamageUtility
 
         for (Transform current = target.transform; current != null; current = current.parent)
         {
-            var behaviours = current.GetComponents<MonoBehaviour>();
-            for (int i = 0; i < behaviours.Length; i++)
-            {
-                if (behaviours[i] is IDamageable candidate)
-                {
-                    damageable = candidate;
-                    return true;
-                }
-            }
+            if (current.TryGetComponent<IDamageable>(out damageable))
+                return true;
         }
 
         return false;

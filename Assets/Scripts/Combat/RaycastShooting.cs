@@ -55,6 +55,7 @@ public sealed class RaycastShooting : MonoBehaviour
     int _activeWeaponIndex;
     Material _tracerMaterial;
     Transform _tracerRoot;
+    ZoneEffectReceiver _zoneEffects;
 
     public HitscanWeaponSettings ResolvedWeapon => _resolvedWeapon;
     public HitscanWeaponDefinition ActiveWeaponDefinition => ResolveActiveWeaponDefinition();
@@ -489,7 +490,12 @@ public sealed class RaycastShooting : MonoBehaviour
     {
         if (Physics.Raycast(muzzle, shotDirection, out var hit, _resolvedWeapon.MaxRange, lineOfFireLayers, triggerInteraction))
         {
-            DamageUtility.TryApplyDamage(hit.collider, new DamageInfo(_resolvedWeapon.Damage, hit.point, shotDirection, gameObject));
+            float damageAmount = _resolvedWeapon.Damage;
+            EnsureZoneEffects();
+            if (_zoneEffects != null)
+                damageAmount *= _zoneEffects.ContactDamageMultiplier;
+
+            DamageUtility.TryApplyDamage(hit.collider, new DamageInfo(damageAmount, hit.point, shotDirection, gameObject));
             return hit.point;
         }
 
@@ -524,7 +530,16 @@ public sealed class RaycastShooting : MonoBehaviour
 
     float GetShotCooldown()
     {
-        return 1f / _resolvedWeapon.ShotsPerSecond;
+        float baseCooldown = 1f / _resolvedWeapon.ShotsPerSecond;
+        EnsureZoneEffects();
+        float attackCooldownMultiplier = _zoneEffects != null ? _zoneEffects.AttackCooldownMultiplier : 1f;
+        return baseCooldown * attackCooldownMultiplier;
+    }
+
+    void EnsureZoneEffects()
+    {
+        if (_zoneEffects == null)
+            _zoneEffects = GetComponent<ZoneEffectReceiver>();
     }
 
     static int GetPressedWeaponSlot(Keyboard keyboard)
