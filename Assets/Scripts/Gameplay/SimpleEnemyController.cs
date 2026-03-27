@@ -78,7 +78,7 @@ public sealed class SimpleEnemyController : MonoBehaviour
         if (Time.time < _nextAttackTime || _target == null)
             return;
 
-        if (DamageUtility.TryApplyDamage(_target.GetComponent<Health>(), new DamageInfo(GetEffectiveContactDamage(), _target.position, transform.forward, gameObject)))
+        if (DamageUtility.TryApplyDamage(_target, new DamageInfo(GetEffectiveContactDamage(), _target.position, transform.forward, gameObject)))
             _nextAttackTime = Time.time + GetEffectiveAttackCooldown();
     }
 

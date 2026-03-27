@@ -981,7 +981,7 @@ MonoBehaviour:
   - effect: {fileID: 11400000, guid: 15f3371fbc5fa0a459f909de9c6f6a4c, type: 2}
     weight: 1
     visualColor: {r: 0.8039216, g: 0.5215687, b: 0.2470588, a: 1}
-    radius: 0.8
+    radius: 1.5
   - effect: {fileID: 11400000, guid: c052f4e674133cf4b9a4592deb9bfa9b, type: 2}
     weight: 3
     visualColor: {r: 0.6, g: 0.6, b: 0.6, a: 1}
@@ -1245,6 +1245,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHealth: 100
   destroyGameObjectOnDeath: 0
+  debugLogApplyDamage: 0
 --- !u!114 &920500016
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1257,9 +1258,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3d4e5f6789012345678abcdef012345, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  health: {fileID: 920500015}
+  health: {fileID: 0}
   hideWhenFullHealth: 1
-  createUiIfMissing: 1
   anchorMin: {x: 0.02, y: 0.92}
   anchorMax: {x: 0.28, y: 0.98}
   backgroundColor: {r: 0.08, g: 0.08, b: 0.1, a: 0.85}

@@ -2,10 +2,17 @@ using UnityEngine;
 
 public static class DamageUtility
 {
+    /// <summary>Временная отладка: логировать неудачный поиск IDamageable (план диагностики HP HUD).</summary>
+    public static bool LogFailedDamageLookup;
+
     public static bool TryApplyDamage(Component target, DamageInfo damageInfo)
     {
         if (!TryFindDamageable(target, out var damageable))
+        {
+            if (LogFailedDamageLookup && target != null)
+                Debug.LogWarning($"[DamageUtility] No IDamageable on '{target.name}' or its ancestors/descendants.", target);
             return false;
+        }
 
         damageable.ApplyDamage(damageInfo);
         return true;
@@ -23,6 +30,8 @@ public static class DamageUtility
                 return true;
         }
 
-        return false;
+        // Health на дочернем объекте, а цель урона — родитель (например Player root без Health).
+        damageable = target.GetComponentInChildren<IDamageable>(true);
+        return damageable != null;
     }
 }

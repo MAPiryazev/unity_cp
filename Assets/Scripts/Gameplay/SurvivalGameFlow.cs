@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -35,6 +37,11 @@ public sealed class SurvivalGameFlow : MonoBehaviour
     {
         ResolveReferences();
         BuildUiIfNeeded();
+    }
+
+    void Start()
+    {
+        EnsurePlayerHealthBar();
     }
 
     void OnEnable()
@@ -117,7 +124,7 @@ public sealed class SurvivalGameFlow : MonoBehaviour
         {
             var player = FindFirstObjectByType<PlayerMovement>();
             if (player != null)
-                playerHealth = player.GetComponent<Health>();
+                playerHealth = player.GetComponent<Health>() ?? player.GetComponentInChildren<Health>(true);
         }
 
         if (waveSpawner == null)
@@ -127,10 +134,22 @@ public sealed class SurvivalGameFlow : MonoBehaviour
             _currentWave = Mathf.Max(1, waveSpawner.CurrentWaveIndex);
     }
 
+    void EnsurePlayerHealthBar()
+    {
+        if (playerHealth == null)
+            return;
+
+        if (playerHealth.GetComponent<PlayerHealthBarUI>() == null)
+            playerHealth.gameObject.AddComponent<PlayerHealthBarUI>();
+    }
+
+
     void BuildUiIfNeeded()
     {
         if (_canvas != null)
             return;
+
+        EnsureEventSystemExists();
 
         _font = ResolveFont();
         var rootObject = new GameObject("SurvivalHUD");
@@ -144,6 +163,16 @@ public sealed class SurvivalGameFlow : MonoBehaviour
         CreateStatsPanel(rootObject.transform);
         _gameOverOverlay = CreateGameOverOverlay(rootObject.transform);
         _gameOverOverlay.SetActive(false);
+    }
+
+    static void EnsureEventSystemExists()
+    {
+        if (FindFirstObjectByType<EventSystem>() != null)
+            return;
+
+        var eventSystemGo = new GameObject("EventSystem");
+        eventSystemGo.AddComponent<EventSystem>();
+        eventSystemGo.AddComponent<InputSystemUIInputModule>();
     }
 
     void CreateStatsPanel(Transform parent)

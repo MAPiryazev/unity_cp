@@ -61,14 +61,25 @@ public static class HealthBarFactory
         Vector2 fillInsetMin,
         Vector2 fillInsetMax)
     {
+        // Keep overlay root at scene root — parenting Screen Space Overlay under a non-UI Transform breaks layout (often 0-size rect).
         var rootObject = new GameObject(rootName);
         var root = rootObject.transform;
 
         var canvas = rootObject.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 200;
-        rootObject.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        // SurvivalGameFlow HUD uses 300; weapon modifier HUD uses 220 — stay clearly on top to avoid full-screen overlays hiding the bar.
+        canvas.sortingOrder = 400;
+        var scaler = rootObject.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
         rootObject.AddComponent<GraphicRaycaster>();
+
+        var rootRect = rootObject.GetComponent<RectTransform>();
+        rootRect.anchorMin = Vector2.zero;
+        rootRect.anchorMax = Vector2.one;
+        rootRect.pivot = new Vector2(0.5f, 0.5f);
+        rootRect.offsetMin = Vector2.zero;
+        rootRect.offsetMax = Vector2.zero;
 
         var panel = new GameObject("BarPanel");
         panel.transform.SetParent(root, false);
