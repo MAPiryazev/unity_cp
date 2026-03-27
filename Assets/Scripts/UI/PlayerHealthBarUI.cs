@@ -133,12 +133,12 @@ public sealed class PlayerHealthBarUI : MonoBehaviour
         rootRect.offsetMin = Vector2.zero;
         rootRect.offsetMax = Vector2.zero;
 
-        // Панель — ЦЕНТР ЭКРАНА, большая, невозможно не заметить.
+        // Панель — левый верхний угол.
         var panel = new GameObject("Panel");
         panel.transform.SetParent(_hudRoot.transform, false);
         var panelRect = panel.AddComponent<RectTransform>();
-        panelRect.anchorMin = new Vector2(0.25f, 0.44f);
-        panelRect.anchorMax = new Vector2(0.75f, 0.56f);
+        panelRect.anchorMin = new Vector2(0.01f, 0.93f);
+        panelRect.anchorMax = new Vector2(0.13f, 0.97f);
         panelRect.offsetMin = Vector2.zero;
         panelRect.offsetMax = Vector2.zero;
 
