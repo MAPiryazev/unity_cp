@@ -1258,13 +1258,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3d4e5f6789012345678abcdef012345, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  health: {fileID: 0}
-  hideWhenFullHealth: 1
-  anchorMin: {x: 0.02, y: 0.92}
-  anchorMax: {x: 0.28, y: 0.98}
-  backgroundColor: {r: 0.08, g: 0.08, b: 0.1, a: 0.85}
-  fillHigh: {r: 0.2, g: 0.75, b: 0.95, a: 1}
-  fillLow: {r: 0.95, g: 0.25, b: 0.2, a: 1}
+  health: {fileID: 920500015}
 --- !u!114 &920500017
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -42,6 +42,7 @@ public sealed class SurvivalGameFlow : MonoBehaviour
     void Start()
     {
         EnsurePlayerHealthBar();
+        EnsureWeaponModifierHud();
     }
 
     void OnEnable()
@@ -141,6 +142,16 @@ public sealed class SurvivalGameFlow : MonoBehaviour
 
         if (playerHealth.GetComponent<PlayerHealthBarUI>() == null)
             playerHealth.gameObject.AddComponent<PlayerHealthBarUI>();
+    }
+
+    void EnsureWeaponModifierHud()
+    {
+        var shooting = FindFirstObjectByType<RaycastShooting>();
+        if (shooting == null)
+            return;
+
+        if (shooting.GetComponent<WeaponModifierHudUI>() == null)
+            shooting.gameObject.AddComponent<WeaponModifierHudUI>();
     }
 
 
