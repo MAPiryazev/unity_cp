@@ -25,7 +25,7 @@ public sealed class HitscanWeaponDefinition : ScriptableObject
             ShowTracer = true,
             TracerDuration = 0.07f,
             TracerWidth = 0.04f,
-            TracerColor = new Color(1f, 0.92f, 0.2f, 0.95f),
+            TracerColor = new Color(1f, 0.9f, 0.08f, 0.95f),
             TracerOriginHeight = 0.55f,
             FireSoundVolume = 0.45f,
             VisualLocalPosition = new Vector3(0.28f, 1.05f, 0.3f),

@@ -22,7 +22,7 @@ MonoBehaviour:
     showTracer: 1
     tracerDuration: 0.05
     tracerWidth: 0.035
-    tracerColor: {r: 1, g: 0.93, b: 0.3, a: 0.95}
+    tracerColor: {r: 1, g: 0.9, b: 0.08, a: 0.95}
     tracerOriginHeight: 0.55
     fireSound: {fileID: 0}
     fireSoundVolume: 0.45

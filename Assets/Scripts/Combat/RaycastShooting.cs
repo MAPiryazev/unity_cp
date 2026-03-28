@@ -38,7 +38,7 @@ public sealed class RaycastShooting : MonoBehaviour
     [SerializeField] bool showTracer = true;
     [SerializeField] float tracerDuration = 0.07f;
     [SerializeField] float tracerWidth = 0.04f;
-    [SerializeField] Color tracerColor = new Color(1f, 0.92f, 0.2f, 0.95f);
+    [SerializeField] Color tracerColor = new Color(1f, 0.9f, 0.08f, 0.95f);
     [SerializeField] Transform tracerOrigin;
     [SerializeField] float tracerOriginHeight = 0.55f;
     [SerializeField] AudioClip fireSound;
@@ -341,6 +341,8 @@ public sealed class RaycastShooting : MonoBehaviour
 
     void ApplyLineVisuals()
     {
+        var color = _resolvedWeapon.TracerColor;
+
         for (int i = 0; i < _tracerLines.Count; i++)
         {
             var line = _tracerLines[i];
@@ -348,8 +350,18 @@ public sealed class RaycastShooting : MonoBehaviour
                 continue;
 
             line.widthMultiplier = _resolvedWeapon.TracerWidth;
-            line.startColor = _resolvedWeapon.TracerColor;
-            line.endColor = _resolvedWeapon.TracerColor;
+            line.startColor = color;
+            line.endColor = color;
+        }
+
+        // URP Unlit shader ignores LineRenderer vertex colors — the color must be
+        // baked into the material's _BaseColor / _Color property directly.
+        if (_tracerMaterial != null)
+        {
+            if (_tracerMaterial.HasProperty("_BaseColor"))
+                _tracerMaterial.SetColor("_BaseColor", color);
+            else if (_tracerMaterial.HasProperty("_Color"))
+                _tracerMaterial.SetColor("_Color", color);
         }
     }
 
