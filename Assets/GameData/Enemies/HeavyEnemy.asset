@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7177e949dedc444e81788d296115ca48, type: 3}
-  m_Name: BasicEnemy
+  m_Name: HeavyEnemy
   m_EditorClassIdentifier: 
-  maxHealth: 30
-  moveSpeed: 2.5
-  contactDamage: 10
-  colliderRadius: 0.45
-  colliderHeight: 2
-  visualLocalScale: {x: 0.9, y: 1, z: 0.9}
-  tintColor: {r: 0.85, g: 0.2, b: 0.2, a: 1}
+  maxHealth: 120
+  moveSpeed: 1.4
+  contactDamage: 25
+  colliderRadius: 0.7
+  colliderHeight: 2.4
+  visualLocalScale: {x: 1.4, y: 1.2, z: 1.4}
+  tintColor: {r: 0.3, g: 0.15, b: 0.7, a: 1}
   visualMaterial: {fileID: 0}

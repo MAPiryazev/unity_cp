@@ -7,7 +7,16 @@ public sealed class SimpleWaveSpawner : MonoBehaviour
 {
     const float MinReferenceLookupInterval = 0.1f;
 
+    [Header("Enemy Types")]
     [SerializeField] EnemyDefinition enemyDefinition;
+    [Tooltip("When assigned, heavy enemies are mixed into each wave starting from firstWaveWithHeavy.")]
+    [SerializeField] EnemyDefinition heavyEnemyDefinition;
+    [Tooltip("Probability (0–1) that any given enemy in a wave is a heavy. Only applies when heavyEnemyDefinition is set.")]
+    [SerializeField] [Range(0f, 1f)] float heavyEnemyChance = 0.25f;
+    [Tooltip("Wave number (1-based) from which heavy enemies start appearing. Set to 1 to have them from the start.")]
+    [SerializeField] int firstWaveWithHeavy = 3;
+
+    [Header("Spawn")]
     [SerializeField] Transform playerTarget;
     [SerializeField] ArenaBootstrap arena;
     [SerializeField] int startingEnemyCount = 2;
@@ -86,13 +95,26 @@ public sealed class SimpleWaveSpawner : MonoBehaviour
         if (!EnsureSpawnReferences())
             return;
 
-        var enemyObject = SimpleEnemyFactory.CreateEnemy(GetSpawnPosition(), playerTarget, enemyDefinition);
+        var definition = PickDefinition();
+        var enemyObject = SimpleEnemyFactory.CreateEnemy(GetSpawnPosition(), playerTarget, definition);
         var health = enemyObject.GetComponent<Health>();
         if (health == null)
             return;
 
         _aliveEnemies.Add(health);
         health.Died += HandleEnemyDeath;
+    }
+
+    EnemyDefinition PickDefinition()
+    {
+        if (heavyEnemyDefinition != null
+            && CurrentWaveIndex >= firstWaveWithHeavy
+            && Random.value < heavyEnemyChance)
+        {
+            return heavyEnemyDefinition;
+        }
+
+        return enemyDefinition;
     }
 
     void HandleEnemyDeath(DamageInfo _)

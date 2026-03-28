@@ -20,6 +20,14 @@ public sealed class WorldHealthBar : MonoBehaviour
     Canvas _canvas;
     Image _fillImage;
 
+    /// <summary>Overrides the bar position above the enemy. Safe to call after AddComponent.</summary>
+    public void SetOffset(Vector3 offset)
+    {
+        worldOffset = offset;
+        if (_billboardRoot != null)
+            _billboardRoot.localPosition = offset;
+    }
+
     void Awake()
     {
         if (health == null)
