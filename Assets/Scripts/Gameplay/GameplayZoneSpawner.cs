@@ -155,13 +155,14 @@ public sealed class GameplayZoneSpawner : MonoBehaviour
 
     bool TryGetSpawnPosition(out Vector3 position)
     {
-        float halfExtent = arena != null ? Mathf.Max(2f, arena.HalfExtent - wallPadding) : 8f;
+        float hx = arena != null ? Mathf.Max(2f, arena.HalfExtentX - wallPadding) : 8f;
+        float hz = arena != null ? Mathf.Max(2f, arena.HalfExtentZ - wallPadding) : 8f;
         for (int attempt = 0; attempt < spawnPositionAttempts; attempt++)
         {
             position = new Vector3(
-                UnityEngine.Random.Range(-halfExtent, halfExtent),
+                UnityEngine.Random.Range(-hx, hx),
                 0f,
-                UnityEngine.Random.Range(-halfExtent, halfExtent));
+                UnityEngine.Random.Range(-hz, hz));
 
             if (playerTarget != null)
             {
@@ -406,9 +407,10 @@ public sealed class GameplayZoneSpawner : MonoBehaviour
     void OnDrawGizmosSelected()
     {
         ResolveReferences();
-        float halfExtent = arena != null ? Mathf.Max(2f, arena.HalfExtent - wallPadding) : 8f;
+        float hx = arena != null ? Mathf.Max(2f, arena.HalfExtentX - wallPadding) : 8f;
+        float hz = arena != null ? Mathf.Max(2f, arena.HalfExtentZ - wallPadding) : 8f;
         Gizmos.color = new Color(0.32f, 0.58f, 0.95f, 0.35f);
-        Gizmos.DrawWireCube(transform.position, new Vector3(halfExtent * 2f, 0.05f, halfExtent * 2f));
+        Gizmos.DrawWireCube(transform.position, new Vector3(hx * 2f, 0.05f, hz * 2f));
     }
 
     void LogDebug(string message)

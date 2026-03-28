@@ -148,13 +148,14 @@ public sealed class WeaponModuleSpawner : MonoBehaviour
     {
         ResolveReferences();
 
-        float halfExtent = arena != null ? Mathf.Max(2f, arena.HalfExtent - wallPadding) : 8f;
+        float hx = arena != null ? Mathf.Max(2f, arena.HalfExtentX - wallPadding) : 8f;
+        float hz = arena != null ? Mathf.Max(2f, arena.HalfExtentZ - wallPadding) : 8f;
         for (int attempt = 0; attempt < Mathf.Max(1, spawnPositionAttempts); attempt++)
         {
             position = new Vector3(
-                UnityEngine.Random.Range(-halfExtent, halfExtent),
+                UnityEngine.Random.Range(-hx, hx),
                 0f,
-                UnityEngine.Random.Range(-halfExtent, halfExtent));
+                UnityEngine.Random.Range(-hz, hz));
 
             if (playerTarget != null)
             {

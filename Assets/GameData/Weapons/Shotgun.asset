@@ -24,7 +24,7 @@ MonoBehaviour:
     tracerWidth: 0.045
     tracerColor: {r: 1, g: 0.9, b: 0.08, a: 0.95}
     tracerOriginHeight: 0.55
-    fireSound: {fileID: 0}
+    fireSound: {fileID: 8300000, guid: 468be1990caf44041b6c83c6e4bac9be, type: 3}
     fireSoundVolume: 0.5
     visualLocalPosition: {x: 0.24, y: 0.9, z: 0.34}
     visualLocalScale: {x: 0.16, y: 0.16, z: 0.82}

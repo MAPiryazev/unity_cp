@@ -176,18 +176,19 @@ public sealed class SimpleWaveSpawner : MonoBehaviour
 
     Vector3 GetSpawnPosition()
     {
-        float halfExtent = arena != null ? Mathf.Max(2f, arena.HalfExtent - spawnPaddingFromWall) : 12f;
-        float side = Random.Range(0, 4);
-        float axis = Random.Range(-halfExtent, halfExtent);
+        float hx = arena != null ? Mathf.Max(2f, arena.HalfExtentX - spawnPaddingFromWall) : 12f;
+        float hz = arena != null ? Mathf.Max(2f, arena.HalfExtentZ - spawnPaddingFromWall) : 12f;
 
-        Vector3 position = side switch
-        {
-            < 1f => new Vector3(axis, 0f, halfExtent),
-            < 2f => new Vector3(axis, 0f, -halfExtent),
-            < 3f => new Vector3(halfExtent, 0f, axis),
-            _ => new Vector3(-halfExtent, 0f, axis)
-        };
+        // Weight sides proportionally so longer walls don't get fewer spawns.
+        float totalPerimeter = (hx + hz) * 2f;
+        float side = Random.Range(0f, totalPerimeter);
 
-        return position;
+        if (side < hx * 2f)
+            return new Vector3(Random.Range(-hx, hx), 0f, hz);
+        if (side < hx * 4f)
+            return new Vector3(Random.Range(-hx, hx), 0f, -hz);
+        if (side < hx * 4f + hz * 2f)
+            return new Vector3(hx, 0f, Random.Range(-hz, hz));
+        return new Vector3(-hx, 0f, Random.Range(-hz, hz));
     }
 }
