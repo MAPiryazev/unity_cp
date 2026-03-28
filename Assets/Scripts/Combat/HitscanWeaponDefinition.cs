@@ -5,6 +5,12 @@ public sealed class HitscanWeaponDefinition : ScriptableObject
 {
     [SerializeField] HitscanWeaponSettings settings = CreateDefaultSettings();
 
+    [Header("Visual Mesh")]
+    [Tooltip("Prefab shown in the player's hand for this weapon. If null, a fallback cube is used.")]
+    [SerializeField] GameObject visualPrefab;
+
+    public GameObject VisualPrefab => visualPrefab;
+
     public HitscanWeaponSettings BuildSettings()
     {
         var resolved = settings;

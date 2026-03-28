@@ -1275,7 +1275,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   holderName: WeaponHolder
-  visualName: WeaponVisual
   muzzleName: Muzzle
 --- !u!1 &931000100
 GameObject:
@@ -1882,8 +1881,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyDefinition: {fileID: 11400000, guid: e51738ea26ae4424921dd4cf0262367d, type: 2}
-  heavyEnemyDefinition: {fileID: 0}
-  heavyEnemyChance: 0.25
+  heavyEnemyDefinition: {fileID: 11400000, guid: e79ae0bf102960c4ebb188c7d883112c, type: 2}
+  heavyEnemyChance: 0.17
   firstWaveWithHeavy: 3
   playerTarget: {fileID: 920500002}
   arena: {fileID: 0}
