@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Shotgun
   m_EditorClassIdentifier: 
   settings:
-    fireMode: 0
+    fireMode: 1
     damage: 4
     maxRange: 22
     shotsPerSecond: 1.3
@@ -27,7 +27,7 @@ MonoBehaviour:
     fireSound: {fileID: 8300000, guid: 468be1990caf44041b6c83c6e4bac9be, type: 3}
     fireSoundVolume: 0.1
     visualLocalPosition: {x: 0.24, y: 0.9, z: 0.34}
-    visualLocalScale: {x: 0.16, y: 0.16, z: 0.82}
+    visualLocalScale: {x: 1, y: 1, z: 1}
     muzzleLocalPosition: {x: 0, y: 0, z: 0.55}
-    visualColor: {r: 0.33, g: 0.22, b: 0.12, a: 1}
-  visualPrefab: {fileID: 0}
+    visualColor: {r: 0, g: 0, b: 0, a: 1}
+  visualPrefab: {fileID: 703301994517736209, guid: 172a031fba5f3db4c9ecd7a09714da9c, type: 3}

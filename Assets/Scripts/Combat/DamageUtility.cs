@@ -14,6 +14,11 @@ public static class DamageUtility
             return false;
         }
 
+        if(target.TryGetComponent<Rigidbody>(out Rigidbody rb))
+		{
+            rb.linearVelocity = damageInfo.Direction * 25;
+        }
+
         damageable.ApplyDamage(damageInfo);
         return true;
     }

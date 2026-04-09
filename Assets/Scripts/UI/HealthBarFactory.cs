@@ -31,17 +31,17 @@ public static class HealthBarFactory
         root.SetParent(parent, false);
         root.localPosition = localOffset;
         root.localScale = Vector3.one * billboardScale;
+        root.rotation =  Quaternion.Euler(90f, 0, 0);
 
-        var canvasGo = new GameObject("Canvas");
+		var canvasGo = new GameObject("Canvas");
         canvasGo.transform.SetParent(root, false);
-        var canvas = canvasGo.AddComponent<Canvas>();
+		var canvas = canvasGo.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.WorldSpace;
         canvas.sortingOrder = 50;
 
         var rect = canvasGo.GetComponent<RectTransform>();
         rect.sizeDelta = size;
         rect.localPosition = Vector3.zero;
-        rect.localRotation = Quaternion.identity;
 
         var scaler = canvasGo.AddComponent<CanvasScaler>();
         scaler.dynamicPixelsPerUnit = pixelsPerUnit;

@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: SO_SmokeZone
   m_EditorClassIdentifier: Assembly-CSharp::SmokeZoneEffectDefinition
   description: 
-  movementMultiplier: 0.85
+  prefab: {fileID: 2977181096595939557, guid: e44fc8b759d211e40b4652eb240e7cf2, type: 3}
+  movementMultiplier: 0.75
   aimTurnMultiplier: 0.7
   contactDamageMultiplier: 0.75
-  attackCooldownMultiplier: 1.25
+  attackCooldownMultiplier: 1.5

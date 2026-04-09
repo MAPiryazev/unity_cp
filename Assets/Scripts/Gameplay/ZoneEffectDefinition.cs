@@ -4,8 +4,10 @@ public abstract class ZoneEffectDefinition : ScriptableObject
 {
     [TextArea]
     [SerializeField] string description;
+    [SerializeField] GameObject prefab;
 
     public string Description => description;
+    public GameObject Prefab => prefab;
 
     void OnValidate()
     {

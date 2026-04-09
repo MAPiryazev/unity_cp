@@ -10,53 +10,22 @@ public static class SimpleEnemyFactory
 
     public static GameObject CreateEnemy(Vector3 position, Transform target, EnemyDefinition definition)
     {
-        float radius = definition != null ? definition.ColliderRadius : DefaultColliderRadius;
-        float height = definition != null ? definition.ColliderHeight : DefaultColliderHeight;
-        Vector3 visualScale = definition != null ? definition.VisualLocalScale : DefaultVisualScale;
-
         var enemyRoot = new GameObject(definition != null ? definition.name : "Enemy");
         enemyRoot.transform.position = position;
         enemyRoot.layer = ResolveEnemyLayer();
 
-        var collider = enemyRoot.AddComponent<CapsuleCollider>();
-        collider.center = new Vector3(0f, height * 0.5f, 0f);
-        collider.radius = radius;
-        collider.height = height;
-
-        var health = enemyRoot.AddComponent<Health>();
+		var health = enemyRoot.AddComponent<Health>();
         health.SetMaxHealth(definition != null ? definition.MaxHealth : 25f);
 
         var controller = enemyRoot.AddComponent<SimpleEnemyController>();
         controller.Initialize(target, definition);
 
         var healthBar = enemyRoot.AddComponent<WorldHealthBar>();
-        healthBar.SetOffset(new Vector3(0f, height + 0.3f, 0f));
+        healthBar.SetOffset(new Vector3(0f, 2f, 0f));
 
-        var visual = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+        var visual = GameObject.Instantiate(definition.Prefab, enemyRoot.transform);
         visual.name = "Visual";
         visual.layer = enemyRoot.layer;
-        visual.transform.SetParent(enemyRoot.transform, false);
-        // Place visual so it sits on the ground: center at half the collider height.
-        visual.transform.localPosition = new Vector3(0f, height * 0.5f, 0f);
-        visual.transform.localScale = visualScale;
-
-        var visualCollider = visual.GetComponent<Collider>();
-        if (visualCollider != null)
-            Object.Destroy(visualCollider);
-
-        var renderer = visual.GetComponent<Renderer>();
-        if (renderer != null)
-        {
-            if (definition != null && definition.VisualMaterial != null)
-            {
-                renderer.material = Object.Instantiate(definition.VisualMaterial);
-            }
-            else
-            {
-                Color tint = definition != null ? definition.TintColor : DefaultTintColor;
-                renderer.material.color = tint;
-            }
-        }
 
         return enemyRoot;
     }

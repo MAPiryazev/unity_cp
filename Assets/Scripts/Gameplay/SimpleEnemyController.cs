@@ -2,7 +2,7 @@ using UnityEngine;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Health))]
-[RequireComponent(typeof(Collider))]
+//[RequireComponent(typeof(Collider))]
 public sealed class SimpleEnemyController : MonoBehaviour
 {
     [SerializeField] EnemyDefinition enemyDefinition;
@@ -18,7 +18,7 @@ public sealed class SimpleEnemyController : MonoBehaviour
     [SerializeField] LayerMask separationLayers;
 
     Transform _target;
-    Collider _selfCollider;
+    //Collider _selfCollider;
     Health _health;
     ZoneEffectReceiver _zoneEffects;
     float _nextAttackTime;
@@ -33,7 +33,7 @@ public sealed class SimpleEnemyController : MonoBehaviour
 
     void Awake()
     {
-        _selfCollider = GetComponent<Collider>();
+        //_selfCollider = GetComponent<Collider>();
         _health = GetComponent<Health>();
         _zoneEffects = GetComponent<ZoneEffectReceiver>();
         ApplyDefinition();
@@ -125,7 +125,8 @@ public sealed class SimpleEnemyController : MonoBehaviour
         for (int i = 0; i < neighbors.Length; i++)
         {
             var other = neighbors[i];
-            if (other == null || other == _selfCollider)
+            //if (other == null || other == _selfCollider)
+            if (other == null)
                 continue;
 
             var otherTransform = other.transform;

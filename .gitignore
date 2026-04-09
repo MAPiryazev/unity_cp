@@ -98,3 +98,75 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# Unity editor recovery / partial copies after failed ops (do not version)
+/[Aa]ssets/_Recovery/
+/[Aa]ssets/_Recovery.meta
+
+# Crash dump folder (name may vary slightly by editor version)
+/[Cc]rash[Rr]eports/
+
+# Plastic SCM (Unity Version Control) local metadata
+.plastic/
+
+# Some CI / local pipelines emit this next to the project
+/[Ss]erialized[Bb]uild[Ii]nfo/
+
+# Code Coverage (com.unity.testtools.codecoverage) output
+/[Cc]ode[Cc]overage/
+/[Cc]ode[Cc]overage.meta
+
+# Merge / backup noise
+*.orig
+*.bak
+*~
+
+# OS junk
+.DS_Store
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Android signing secrets
+*.keystore
+*.jks
+*.pepk
+key.properties
+*.mobileprovision
+
+# Android Gradle: local SDK/NDK paths (machine-specific)
+/[Aa]ssets/Plugins/Android/local.properties
+
+# Common extra mobile / IL2CPP build outputs (when not under Build/)
+*.ipa
+*.obb
+*.apk.idsig
+*.symbols.zip
+*.sym.zip
+
+# Xcode debug symbols (large)
+*.dSYM/
+*.dSYM.zip
+
+# Unity Test Framework / dotnet-style test output at repo root
+/[Tt]est[Rr]esults/
+
+# npm/yarn inside embedded packages or Editor tools
+**/node_modules/
+
+# Legacy Unity Collaborate (harmless if folder absent)
+.collab/
+
+# Local archive drops / dumps (not source)
+/*.7z
+/*.rar
+/*.zip
+
+# Asset Store: redundant *_Source.zip (raw Maya/Blender etc.) when FBX already in the pack
+/[Aa]ssets/[Aa]sset[Ss]tore/**/*_Source.zip
+/[Aa]ssets/[Aa]sset[Ss]tore/**/*_Source.zip.meta
+
+# Vim swapfiles if you edit inside the repo
+*.swp
+*.swo
