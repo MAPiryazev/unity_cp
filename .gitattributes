@@ -1,0 +1,93 @@
+# Store text as LF in the repo (stops CRLF/LF warning spam on Windows)
+* text=auto eol=lf
+
+# Unity / code text
+*.cs text diff=csharp eol=lf
+*.shader text eol=lf
+*.cginc text eol=lf
+*.hlsl text eol=lf
+*.compute text eol=lf
+*.shadergraph text eol=lf
+*.shadersubgraph text eol=lf
+*.raytrace text eol=lf
+*.json text eol=lf
+*.xml text eol=lf
+*.txt text eol=lf
+*.md text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.asmdef text eol=lf
+*.asmref text eol=lf
+*.rsp text eol=lf
+*.props text eol=lf
+*.targets text eol=lf
+*.xaml text eol=lf
+*.meta text eol=lf
+*.prefab text eol=lf
+*.unity text eol=lf
+*.asset text eol=lf
+*.mat text eol=lf
+*.anim text eol=lf
+*.controller text eol=lf
+*.overrideController text eol=lf
+*.mask text eol=lf
+*.rendertexture text eol=lf
+*.physicMaterial text eol=lf
+*.physicsMaterial2D text eol=lf
+*.playable text eol=lf
+*.preset text eol=lf
+*.brush text eol=lf
+*.spriteatlas text eol=lf
+*.terrainlayer text eol=lf
+*.mixer text eol=lf
+*.shadervariants text eol=lf
+*.guiskin text eol=lf
+*.fontsettings text eol=lf
+*.giparams text eol=lf
+*.bytes.meta text eol=lf
+
+# Binary — do not alter line endings
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.tif binary
+*.tiff binary
+*.tga binary
+*.gif binary
+*.ico binary
+*.bmp binary
+*.exr binary
+*.hdr binary
+*.psd binary
+*.webp binary
+*.ktx binary
+*.ktx2 binary
+*.dds binary
+*.wav binary
+*.mp3 binary
+*.ogg binary
+*.aif binary
+*.aiff binary
+*.flac binary
+*.mp4 binary
+*.mov binary
+*.webm binary
+*.avi binary
+*.fbx binary
+*.obj binary
+*.dae binary
+*.3ds binary
+*.blend binary
+*.pdf binary
+*.zip binary
+*.unitypackage binary
+*.dll binary
+*.exe binary
+*.pdb binary
+*.mdb binary
+*.so binary
+*.dylib binary
+*.aar binary
+*.jar binary
+*.bundle binary
+*.a binary

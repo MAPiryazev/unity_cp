@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7177e949dedc444e81788d296115ca48, type: 3}
+  m_Name: BasicEnemy
+  m_EditorClassIdentifier: 
+  maxHealth: 30
+  moveSpeed: 2.5
+  contactDamage: 10
+  prefab: {fileID: 5252878884000314703, guid: b64cea326b7ad7f42aa8732514849fd3, type: 3}
