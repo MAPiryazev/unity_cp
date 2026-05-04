@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: SO_SlowZone
   m_EditorClassIdentifier: Assembly-CSharp::SlowZoneEffectDefinition
   description: 
+  prefab: {fileID: 2279134474181501406, guid: ca324311fbcabe947a2b31c4b32b65ec, type: 3}
   movementMultiplier: 0.6
   aimTurnMultiplier: 0.85

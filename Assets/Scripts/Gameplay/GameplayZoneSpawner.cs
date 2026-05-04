@@ -136,7 +136,7 @@ public sealed class GameplayZoneSpawner : MonoBehaviour
         rb.useGravity = false;
 
         zone.Configure(entry.Effect, shouldAffectTriggers: true);
-        CreateZoneVisual(zoneObject.transform, entry.Radius, entry.VisualColor);
+        CreateZoneVisual(zoneObject.transform, entry.Effect.Prefab);
 
         _activeZones.Add(zone);
         float lifetime = GetRandomLifetime();
@@ -261,27 +261,10 @@ public sealed class GameplayZoneSpawner : MonoBehaviour
             spawnTable = Array.Empty<ZoneSpawnEntry>();
     }
 
-    static void CreateZoneVisual(Transform parent, float radius, Color color)
+    static void CreateZoneVisual(Transform parent, GameObject prefab)
     {
-        var visual = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        var visual = Instantiate(prefab, parent);
         visual.name = "ZoneVisual";
-        visual.transform.SetParent(parent, false);
-        // Cylinder is ~0.04 tall after scale; floor top is ~y=0. Keep the disc sitting on the floor (was -0.48 — fully underground).
-        float discHalfHeight = 0.02f;
-        visual.transform.localPosition = new Vector3(0f, discHalfHeight, 0f);
-        visual.transform.localScale = new Vector3(radius * 2f, 0.02f, radius * 2f);
-
-        var collider = visual.GetComponent<Collider>();
-        if (collider != null)
-            Destroy(collider);
-
-        var renderer = visual.GetComponent<Renderer>();
-        if (renderer != null)
-        {
-            var mat = renderer.material;
-            if (mat != null)
-                mat.color = color;
-        }
     }
 
     void EnsureSpawnTableIsInitialized()

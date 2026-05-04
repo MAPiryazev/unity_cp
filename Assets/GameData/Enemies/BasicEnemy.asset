@@ -15,8 +15,4 @@ MonoBehaviour:
   maxHealth: 30
   moveSpeed: 2.5
   contactDamage: 10
-  colliderRadius: 0.45
-  colliderHeight: 2
-  visualLocalScale: {x: 0.9, y: 1, z: 0.9}
-  tintColor: {r: 0.85, g: 0.2, b: 0.2, a: 1}
-  visualMaterial: {fileID: 0}
+  prefab: {fileID: 5252878884000314703, guid: b64cea326b7ad7f42aa8732514849fd3, type: 3}

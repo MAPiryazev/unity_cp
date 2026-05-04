@@ -17,6 +17,7 @@ public sealed class WeaponModuleSpawner : MonoBehaviour
         [SerializeField] float weight;
         [SerializeField] Color pickupColor;
         [SerializeField] Vector3 pickupScale;
+        [SerializeField] GameObject prefab;
 
         public WeaponModifierDefinition Definition => definition;
         public StatWeaponModifierTemplate RuntimeModifier => runtimeModifier;
@@ -25,6 +26,7 @@ public sealed class WeaponModuleSpawner : MonoBehaviour
         public Color PickupColor => pickupColor.maxColorComponent > 0.001f ? pickupColor : Color.white;
         public Vector3 PickupScale => pickupScale == Vector3.zero ? new Vector3(0.45f, 0.2f, 0.45f) : pickupScale;
         public bool IsValid => definition != null || runtimeModifier.HasEffect;
+        public GameObject Prefab => prefab;
 
         public static SpawnEntry Create(
             WeaponModifierDefinition definition,
@@ -137,7 +139,7 @@ public sealed class WeaponModuleSpawner : MonoBehaviour
             entry.Definition,
             entry.RuntimeModifier,
             entry.Duration,
-            entry.PickupColor,
+            entry.Prefab,
             entry.PickupScale);
 
         RegisterPickup(pickup);

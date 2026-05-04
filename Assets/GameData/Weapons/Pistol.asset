@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: Pistol
   m_EditorClassIdentifier: 
   settings:
-    fireMode: 0
+    fireMode: 1
     damage: 12
     maxRange: 40
     shotsPerSecond: 4.5
     projectileCount: 1
-    spreadAngle: 0
+    spreadAngle: 1
     showTracer: 1
     tracerDuration: 0.05
     tracerWidth: 0.035

@@ -25,7 +25,10 @@ public sealed class WorldHealthBar : MonoBehaviour
     {
         worldOffset = offset;
         if (_billboardRoot != null)
+		{
             _billboardRoot.localPosition = offset;
+            _billboardRoot.SetParent(null);
+        }
     }
 
     void Awake()
@@ -56,11 +59,7 @@ public sealed class WorldHealthBar : MonoBehaviour
         if (_billboardRoot == null)
             return;
 
-        var cam = Camera.main;
-        if (cam == null)
-            return;
-
-        _billboardRoot.rotation = Quaternion.LookRotation(_billboardRoot.position - cam.transform.position);
+        _billboardRoot.position = transform.position + worldOffset;
     }
 
     void OnHealthChanged(float current, float max)
@@ -69,6 +68,9 @@ public sealed class WorldHealthBar : MonoBehaviour
 
         if (_canvas != null)
             _canvas.enabled = current < max - 0.01f;
+
+        if (current <= 0)
+            Destroy(_billboardRoot.gameObject);
     }
 
     void BuildIfNeeded()

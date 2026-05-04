@@ -1,4 +1,6 @@
 using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(CharacterController))]
@@ -7,6 +9,7 @@ public sealed class PlayerMovement : MonoBehaviour
     [SerializeField] float moveSpeed = 3.5f;
     [SerializeField] float gravity = -30f;
     [SerializeField] Camera aimCamera;
+    [SerializeField] Animator animator;
     [Tooltip("Degrees per second — max turn speed toward cursor.")]
     [SerializeField] float aimTurnSpeedDegrees = 540f;
 
@@ -14,7 +17,16 @@ public sealed class PlayerMovement : MonoBehaviour
     ZoneEffectReceiver _zoneEffects;
     Vector3 _verticalVelocity;
 
-    void Awake()
+	private IEnumerator Start()
+	{
+        for (float t = 0; t < 0.25f; t += Time.deltaTime)
+		{
+            transform.position += Vector3.forward * Time.deltaTime;
+            yield return null;
+        }
+	}
+
+	void Awake()
     {
         _characterController = GetComponent<CharacterController>();
         _zoneEffects = GetComponent<ZoneEffectReceiver>();
@@ -48,6 +60,8 @@ public sealed class PlayerMovement : MonoBehaviour
         var direction = new Vector3(x, 0f, z);
         if (direction.sqrMagnitude > 1f)
             direction.Normalize();
+
+        animator.SetFloat("speed", direction.sqrMagnitude);
 
         var move = direction * (GetEffectiveMoveSpeed() * Time.deltaTime);
         _characterController.Move(move);

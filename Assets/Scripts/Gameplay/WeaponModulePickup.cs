@@ -19,10 +19,9 @@ public sealed class WeaponModulePickup : MonoBehaviour
     [SerializeField] string visualName = "Visual";
     [SerializeField] Vector3 visualScale = new Vector3(0.45f, 0.2f, 0.45f);
     [SerializeField] Vector3 visualOffset = new Vector3(0f, 0.35f, 0f);
-    [SerializeField] Color visualColor = new Color(0.35f, 0.8f, 1f, 1f);
+    [SerializeField] GameObject prefab;
 
     Transform _visual;
-    Renderer _visualRenderer;
     Vector3 _baseLocalVisualOffset;
     bool _pickedUp;
 
@@ -33,8 +32,8 @@ public sealed class WeaponModulePickup : MonoBehaviour
     void Awake()
     {
         EnsureSpawnerExists();
-        BuildVisualIfNeeded();
-        ApplyVisualState();
+        //BuildVisualIfNeeded();
+        //ApplyVisualState();
     }
 
     void Reset()
@@ -49,7 +48,6 @@ public sealed class WeaponModulePickup : MonoBehaviour
         bobHeight = Mathf.Max(0f, bobHeight);
         bobSpeed = Mathf.Max(0f, bobSpeed);
         EnsureTriggerCollider();
-        EnsureFallbackVisualColor();
         if (!Application.isPlaying)
         {
             BuildVisualIfNeeded();
@@ -92,15 +90,14 @@ public sealed class WeaponModulePickup : MonoBehaviour
         WeaponModifierDefinition definition,
         StatWeaponModifierTemplate template,
         float duration,
-        Color pickupColor,
+        GameObject prefab,
         Vector3 pickupScale)
     {
         moduleDefinition = definition;
         runtimeModifier = template;
         effectDuration = Mathf.Max(0.1f, duration);
-        visualColor = pickupColor;
+        this.prefab = prefab;
         visualScale = pickupScale;
-        EnsureFallbackVisualColor();
         BuildVisualIfNeeded();
         ApplyVisualState();
     }
@@ -134,12 +131,18 @@ public sealed class WeaponModulePickup : MonoBehaviour
 
     void BuildVisualIfNeeded()
     {
+        if(prefab == null)
+		{
+            Debug.LogError("WeaponModulePickup don't have prefab");
+            return;
+		}
+
         if (_visual == null)
         {
             _visual = transform.Find(visualName);
             if (_visual == null)
             {
-                var visualObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                var visualObject = Instantiate(prefab);
                 visualObject.name = visualName;
                 visualObject.transform.SetParent(transform, false);
 
@@ -151,9 +154,6 @@ public sealed class WeaponModulePickup : MonoBehaviour
 
         if (_visual != null)
             RemoveCollider(_visual.GetComponent<Collider>());
-
-        if (_visualRenderer == null && _visual != null)
-            _visualRenderer = _visual.GetComponent<Renderer>();
     }
 
     void ApplyVisualState()
@@ -165,29 +165,6 @@ public sealed class WeaponModulePickup : MonoBehaviour
         _visual.localPosition = _baseLocalVisualOffset;
         _visual.localRotation = Quaternion.identity;
         _visual.localScale = visualScale;
-
-        if (_visualRenderer == null)
-            _visualRenderer = _visual.GetComponent<Renderer>();
-
-        ApplyRendererColor(_visualRenderer, visualColor);
-    }
-
-    void EnsureFallbackVisualColor()
-    {
-        if (visualColor.maxColorComponent > 0.001f)
-            return;
-
-        visualColor = WeaponModifierPresets.GetDefaultColor(GetInstanceID());
-    }
-
-    static void ApplyRendererColor(Renderer renderer, Color color)
-    {
-        if (renderer == null)
-            return;
-
-        var targetMaterial = Application.isPlaying ? renderer.material : renderer.sharedMaterial;
-        if (targetMaterial != null)
-            targetMaterial.color = color;
     }
 
     void EnsureSpawnerExists()

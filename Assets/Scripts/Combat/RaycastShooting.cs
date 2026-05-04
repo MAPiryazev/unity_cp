@@ -33,6 +33,8 @@ public sealed class RaycastShooting : MonoBehaviour
     [SerializeField] QueryTriggerInteraction triggerInteraction = QueryTriggerInteraction.Collide;
     [Tooltip("Не дать двум выстрелам в один кадр (дубли ввода / несколько источников).")]
     [SerializeField] bool preventSameFrameDoubleShot = true;
+    [SerializeField] bool sphereCast = true;
+    [SerializeField] float sphereCastRadius;
 
     [Header("Feedback")]
     [SerializeField] bool showTracer = true;
@@ -500,18 +502,32 @@ public sealed class RaycastShooting : MonoBehaviour
 
     Vector3 FireSingleProjectile(Vector3 muzzle, Vector3 shotDirection)
     {
-        if (Physics.Raycast(muzzle, shotDirection, out var hit, _resolvedWeapon.MaxRange, lineOfFireLayers, triggerInteraction))
-        {
-            float damageAmount = _resolvedWeapon.Damage;
-            EnsureZoneEffects();
-            if (_zoneEffects != null)
-                damageAmount *= _zoneEffects.ContactDamageMultiplier;
+        RaycastHit hit;
+        bool hitDetected = sphereCast
+            ? Physics.SphereCast(muzzle, 0.125f, shotDirection, out hit, _resolvedWeapon.MaxRange, lineOfFireLayers, triggerInteraction)
+            : Physics.Raycast(muzzle, shotDirection, out hit, _resolvedWeapon.MaxRange, lineOfFireLayers, triggerInteraction);
 
-            DamageUtility.TryApplyDamage(hit.collider, new DamageInfo(damageAmount, hit.point, shotDirection, gameObject));
+        if (hitDetected)
+        {
+            ApplyDamage(hit.collider, hit.point, shotDirection);
             return hit.point;
         }
 
         return muzzle + shotDirection * _resolvedWeapon.MaxRange;
+    }
+
+    void ApplyDamage(Collider collider, Vector3 hitPoint, Vector3 shotDirection)
+    {
+        float damageAmount = _resolvedWeapon.Damage;
+        EnsureZoneEffects();
+        if (_zoneEffects != null)
+            damageAmount *= _zoneEffects.ContactDamageMultiplier;
+
+        Transform effect = ObjectPool.GetObjectByTag(PolledObjectTag.HitEffect).transform;
+        effect.position = hitPoint;
+        effect.rotation = Quaternion.FromToRotation(Vector3.forward, shotDirection);
+
+        DamageUtility.TryApplyDamage(collider, new DamageInfo(damageAmount, hitPoint, shotDirection, gameObject));
     }
 
     void HandleWeaponSwitchInput()
